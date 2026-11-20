@@ -608,7 +608,7 @@ function vEmpSettings(){
   h+='<h2>Seguridad</h2><div class="card"><div class="row"><span>'+svg('lock')+'</span><div class="grow"><div class="name">PIN de 4 dígitos</div><div class="sub">'+(S.pin?'Activado: se pide al abrir la app.':'Desactivado.')+'</div></div></div><div class="'+(S.pin?'seg':'opts')+'">'+(S.pin?'<button class="btn" data-a="pinset">Cambiar PIN</button><button class="btn" data-a="pinoff">Quitar PIN</button>':'<button class="btn" data-a="pinset">Activar PIN</button>')+'</div></div>';
   h+='<h2>Respaldo</h2><div class="card"><div class="sub">Guarda una copia de todos los datos'+(S.lastBackup?' · último respaldo: '+fmtD(S.lastBackup):'')+'.</div><button class="btn pri full" style="margin-top:12px" data-a="backupdl">Descargar respaldo</button><div class="seg"><button class="btn" data-a="backup">Copiar respaldo</button><button class="btn" data-a="restore">Restaurar</button></div></div>';
   if(S.mode==='cloud'){const q=Object.keys(sync.queue).length;
-    h+='<h2>Tu cuenta</h2><div class="card"><div class="name">'+esc(me&&me.email||S.emp.email||'Cuenta de empleador')+'</div><div class="sub">'+(sync.err?'<span style="color:var(--a)">No se pudo sincronizar: '+esc(sync.err)+'</span>':q?q+' cambio'+(q>1?'s':'')+' por enviar':'Todo guardado en la nube')+(sync.lastPull?' · revisado '+new Date(sync.lastPull).toTimeString().slice(0,5):'')+'</div><div class="seg"><button class="btn" data-a="syncnow">Sincronizar</button><button class="btn" data-a="out">Cerrar sesión</button></div></div>';
+    h+='<h2>Tu cuenta</h2><div class="card"><div class="name">'+esc(me&&me.email||S.emp.email||'Cuenta de empleador')+'</div><div class="sub">'+(sync.err?'<span style="color:var(--a)">No se pudo sincronizar: '+esc(sync.err)+'</span>':q?q+' cambio'+(q>1?'s':'')+' por enviar':'Todo guardado en la nube')+(sync.lastPull?' · revisado '+new Date(sync.lastPull).toTimeString().slice(0,5):'')+'</div><div class="seg"><button class="btn" data-a="syncnow">Sincronizar</button><button class="btn" data-a="pwform">Cambiar clave</button></div><button class="btn full" style="margin-top:8px" data-a="out">Cerrar sesión</button></div>';
     h+='<h2>Datos de prueba</h2><div class="card"><div class="sub">Para probar la app con ejemplos (casa, jardinera y una cuadrilla). Después puedes borrarlos.</div><div class="seg"><button class="btn" data-a="loaddemo">Cargar ejemplos</button><button class="btn" data-a="wipe">Borrar todo</button></div></div>';}
   else h+='<h2>Modo de prueba</h2><div class="card"><div class="sub">Estás usando datos de ejemplo guardados solo en este teléfono. Para probar la vista de un trabajador: Equipo → la persona → Ficha → «Invitar a la app» → «Probar en este teléfono».</div><div class="opts"><button class="btn full" data-a="reset">Reiniciar datos de ejemplo</button><button class="btn full" data-a="out">Salir del modo de prueba</button></div></div>';
   return h;
@@ -745,6 +745,23 @@ function vWorMsgs(){
   return top('Mensajes','Con '+esc(S.emp.name.split(' ')[0]))+'<div class="qk">'+QUICK.map((q,i)=>'<button data-a="quick" data-v="'+i+'">'+q[0]+'</button>').join('')+'</div>'+threadHtml(w.id,'w')+'<form id="fm"><label for="mt">Escribir un mensaje</label><textarea id="mt" placeholder="Escribe aquí" required></textarea><button class="btn pri full" style="margin-top:10px" type="submit">Enviar</button></form>';
 }
 
+function vWorProfile(){
+  const w=W(S.wid),p=w.p,x=w.w,e=S.emp;
+  const grp=(t,rows)=>'<h2>'+t+'</h2><div class="card lines">'+rows.filter(r=>r).map(r=>'<div><span>'+r[0]+'</span><b style="white-space:normal">'+esc(r[1]||'—')+'</b></div>').join('')+'</div>';
+  let h=top('Mi perfil',esc(p.name));
+  h+=grp('Mis datos',[['Nombre',p.name],['RUT',p.rut],['Teléfono',p.phone],['Correo',p.email],['Domicilio',[p.address,p.comuna].filter(Boolean).join(', ')]]);
+  h+=grp('Mi trabajo',[['Labor',x.labor],['Días',x.days.map(d=>DAB[d]).join(', ')],['Horario',x.start+' a '+x.end],['Lugar',placesOf(w).map(pl=>pl.name).join(', ')],['Contrato',x.contract+(x.contract==='Plazo fijo'&&x.endDate?' hasta '+fmtS(x.endDate):'')]]);
+  h+=grp('Mi sueldo',[['Forma de pago',x.modality+' · '+clp(x.rate)],['Se paga',x.freq],+x.transport?['Movilización',clp(x.transport)]:null,+x.meal?['Colación',clp(x.meal)]:null]);
+  h+=grp('Previsión y banco',[['AFP',w.prev.afp],['Salud',w.prev.salud],['Banco',w.bank.name+' · '+w.bank.type],['N° de cuenta',w.bank.number]]);
+  h+='<button class="btn pri full" style="margin-top:4px" data-a="askfix">Algo está mal: pedir un ajuste</button>';
+  const ph=String(e.phone||'').replace(/\s/g,'');
+  h+='<h2>Mi empleador</h2><div class="card"><div class="name">'+esc(e.name||'—')+'</div>'+(e.address?'<div class="sub">'+esc(empAddr())+'</div>':'')+
+    '<div class="lines" style="margin-top:10px"><div><span>Teléfono</span><b>'+esc(e.phone||'—')+'</b></div><div><span>Correo</span><b style="white-space:normal;overflow-wrap:anywhere">'+esc(e.email||'—')+'</b></div></div>'+
+    '<div class="seg">'+(ph?'<a class="btn" href="tel:'+esc(ph)+'">Llamar</a><a class="btn" href="'+wa(e.phone,'')+'" target="_blank" rel="noopener">WhatsApp</a>':'')+'</div>'+(e.email?'<a class="btn full" style="margin-top:8px" href="mailto:'+esc(e.email)+'">Enviar correo</a>':'')+'</div>';
+  h+='<h2>Sesión</h2><div class="card"><div class="sub">Opción para la fase de pruebas.</div><button class="btn full" style="margin-top:10px" data-a="wlogout">Cerrar sesión</button></div>';
+  return h;
+}
+
 /* ---------- pantallas de entrada ---------- */
 function welcome(){
   return '<div class="welcome"><div style="font-weight:800;font-size:18px">Jornada</div><h1>La libreta de asistencia, en tu celular.</h1><p>Marca la llegada, lleva los pagos y avisa cambios, sin papeles.</p>'+
@@ -816,9 +833,9 @@ function render(keep){
       const un=S.msgs.filter(m=>m.from==='w'&&!m.read).length;
       tabs=[['home','Inicio','home'],['team','Equipo','team'],['msgs','Mensajes','msg',un],['set','Ajustes','gear']];
     }else{
-      body=S.tab==='days'?vWorDays():S.tab==='pay'?vWorPay():S.tab==='msgs'?vWorMsgs():vWorHome();
+      body=S.tab==='days'?vWorDays():S.tab==='pay'?vWorPay():S.tab==='msgs'?vWorMsgs():S.tab==='prof'?vWorProfile():vWorHome();
       const un=S.msgs.filter(m=>m.wid===S.wid&&m.from==='e'&&!m.read).length;
-      tabs=[['home','Hoy','home'],['days','Mis días','cal'],['pay','Mi plata','pay'],['msgs','Mensajes','msg',un]];
+      tabs=[['home','Hoy','home'],['days','Mis días','cal'],['pay','Mi plata','pay'],['msgs','Mensajes','msg',un],['prof','Perfil','me']];
     }
     const cur=S.role==='emp'&&S.detail?'team':S.tab;
     app.innerHTML='<main>'+body+'</main><nav class="nav" style="grid-template-columns:repeat('+tabs.length+',1fr)">'+tabs.map(x=>'<button class="'+(cur===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+svg(x[2])+x[1]+(x[3]?'<span class="n">'+x[3]+'</span>':'')+'</button>').join('')+'</nav>';
@@ -1119,6 +1136,10 @@ app.addEventListener('click',async e=>{
   if(a==='role'){if(S.device)return;S.role=v;S.tab='home';S.detail=null;S.mk=MK;locked=v==='emp'&&!!S.pin;pinBuf='';render();return}
   if(a==='join'){S.role='join';joinErr='';render();return}
   if(a==='out'){if(S.device)return;if(S.mode==='cloud'&&me&&me.kind==='emp'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">Tus datos quedan guardados en la nube. Para volver a entrar necesitas tu correo y tu clave.</div><div class="opts"><button class="btn on-a" data-a="logout">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}if(S.role==='emp'&&S.mode==='demo'){S=blankState();render();return}S.role=null;S.wid=null;S.detail=null;authErr='';render();return}
+  if(a==='pwform'){sheet('<h3>Cambiar clave</h3><div class="sub">Elige una clave que recuerdes, de al menos 6 caracteres.</div><form id="fpw"><label for="np1">Clave nueva</label><input id="np1" type="password" autocomplete="new-password" minlength="6" required><label for="np2">Repite la clave nueva</label><input id="np2" type="password" autocomplete="new-password" minlength="6" required><div id="pwerr"></div><div class="opts"><button class="btn pri" type="submit">Guardar clave</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='askfix'){sheet('<h3>Pedir un ajuste</h3><div class="sub">Cuéntale a tu empleador qué dato está malo y cuál es el correcto.</div><form id="ffix"><label for="fxt">¿Qué hay que corregir?</label><textarea id="fxt" required placeholder="Ej: mi número de cuenta es 12345678"></textarea><div class="opts"><button class="btn pri" type="submit">Enviar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='wlogout'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">'+(S.mode==='cloud'?'Este teléfono dejará de estar conectado. Para volver a entrar necesitarás un link nuevo de tu empleador (en tu ficha: «Invitar a la app» → «Crear link nuevo»).':'Este teléfono dejará de estar conectado a esta persona.')+'</div><div class="opts"><button class="btn on-a" data-a="wlogoutok">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='wlogoutok'){close();if(S.mode==='cloud'){try{sb&&sb.auth.signOut()}catch(e){}me=null;resetSync();const pin=S.pin;S=blankState();S.pin=pin}else{S.device=null;S.role=null;S.wid=null;S.tab='home'}tour=null;render();return}
   if(a==='logout'){close();try{sb&&sb.auth.signOut()}catch(e){}me=null;resetSync();const pin=S.pin;S=blankState();S.pin=pin;locked=false;render();return}
   if(a==='empgo'){if(S.mode==='cloud'&&me&&me.kind==='emp'){S.role='emp';locked=!!S.pin}else{S.role='auth';authErr=''}render();return}
   if(a==='authmode'){authMode=authMode==='up'?'in':'up';authErr='';render();return}
@@ -1223,6 +1244,10 @@ app.addEventListener('input',e=>{const t=e.target;if(t.hasAttribute('data-money'
 app.addEventListener('submit',async e=>{
   e.preventDefault();const f=e.target,q=id=>f.querySelector('#'+id),val=id=>q(id).value.trim();
   if(f.id==='fjoin'){const code=val('jc');if(S.mode==='demo'){const err=redeem(code);if(err){joinErr=err}render();return}joinBusy=true;joinErr='';render();const err=await redeemCloud(code);joinBusy=false;if(err)joinErr=err;render();return}
+  if(f.id==='ffix'){const t=val('fxt');if(!t)return;S.msgs.push({id:uid('m'),wid:S.wid,from:'w',text:'Pido un ajuste en mis datos: '+t,date:TODAY,t:now(),read:false});close();render(true);toast('Solicitud enviada a tu empleador');return}
+  if(f.id==='fpw'){const a1=q('np1').value,a2=q('np2').value,er=q('pwerr');if(a1.length<6){er.innerHTML='<div class="err">Debe tener al menos 6 caracteres.</div>';return}if(a1!==a2){er.innerHTML='<div class="err">Las claves no coinciden.</div>';return}
+    await bootSb();if(!sb){er.innerHTML='<div class="err">Necesitas internet para cambiar la clave.</div>';return}
+    try{const r=await sb.auth.updateUser({password:a1});if(r.error){const m=r.error.message||'';er.innerHTML='<div class="err">'+esc(/different from the old|same/i.test(m)?'La clave nueva debe ser distinta a la anterior.':/reauth|recent/i.test(m)?'Por seguridad, cierra sesión, vuelve a entrar y prueba de nuevo.':authMsg(m))+'</div>';return}close();toast('Clave cambiada')}catch(e){er.innerHTML='<div class="err">'+esc(authMsg(String(e&&e.message||e)))+'</div>'}return}
   if(f.id==='fauth'){const em=val('ae'),pw=q('ap').value;authBusy=true;authErr='';authEmail=em;render();const err=await empLogin(em,pw,authMode==='up');authBusy=false;if(err){authErr=err;render();return}render();return}
   if(f.id==='fday'){const id=f.dataset.w,s=f.dataset.d,st=val('ds');if(!st){toast('Elige cómo quedó el día');return}const rec={s:st,ot:+app.querySelector('#dot').textContent||0,note:val('dn2')};const ws=dayWarns(W(id),s);pendDay={id,s,rec};if(ws.length){sheet('<h3>¿Confirmas el cambio?</h3><div class="sub">'+esc(first(W(id)))+' · '+fmtD(s)+' → <b>'+ST[st].t+'</b>'+(rec.ot?' · '+rec.ot+' h extra':'')+'</div>'+warnHtml(ws)+'<div class="opts"><button class="btn pri" data-a="dayok">Sí, guardar el cambio</button><button class="btn" data-a="dayback">Volver a revisar</button></div>');return}applyDay();return}
   if(f.id==='fj'){const id=f.dataset.w,o=f.querySelector('input[name=jo]:checked').value,c=S.ck[id][TODAY].in;c.st='rej';c.dec=now();c.out=o;c.note=val('jn');if(o==='A')S.att[id][TODAY]={s:'A',ot:0,note:'Llegada rechazada'};else delete S.att[id][TODAY];log(id,TODAY,'Empleador rechazó la llegada · '+(o==='A'?'marcado ausente':'pidió marcar de nuevo')+(c.note?' · “'+c.note+'”':''));notify(id,o==='A'?'Tu empleador no aceptó tu llegada y marcó el día como ausente.':'Tu empleador te pide marcar la llegada otra vez desde el lugar de trabajo.');close();render(true);toast('Llegada rechazada');return}
