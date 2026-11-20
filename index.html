@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffd23f">
+<title>Jornada</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jornada">
+<meta name="description" content="Asistencia, check-in con ubicación y pagos para trabajadoras de casa particular y del campo.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday app: a full office for the employer, a big-button tool for workers who rarely use phones
+   IDEA the paper attendance "libreta" turned into a shipped mobile app
+   PICTURE the working app: a giant arrival button for the worker, live check-in cards and the month for the employer
+   COLOUR white ground, sun yellow fields, black ink, cobalt accent; night #121316
+   TYPE Plus Jakarta Sans throughout; worker view one size larger
+   LAYOUT one phone-width column with bottom tab bar; framed and centered on wide screens */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121316);--bg2:light-dark(#ecebe4,#08090b);--ink:light-dark(#15161a,#f3f2ee);--mute:light-dark(#5d6069,#a4a7ae);--line:light-dark(#e3e1d8,#2a2c31);--card:light-dark(#f6f5f0,#1b1d22);--sun:#ffd23f;--sunink:#15161a;--blue:light-dark(#2346ff,#8396ff);--onblue:light-dark(#ffffff,#0b0c10);--p:#1f9d55;--a:#e5484d;--l:#f59e0b;--v:#3b82f6;--f:#8b5cf6;--x:#9a9ea8}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%;margin:0}
+body{background:var(--bg2);color:var(--ink);font:16px/1.5 "Plus Jakarta Sans",system-ui,sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+#app{position:relative;max-width:440px;height:100%;margin:0 auto;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:520px){#app{height:calc(100% - 40px);margin-top:20px;border-radius:28px;box-shadow:0 0 0 1px var(--line)}}
+main{flex:1;overflow-y:auto;padding:0 16px 28px}
+.top{background:var(--sun);color:var(--sunink);padding:calc(18px + env(safe-area-inset-top,0px)) 20px 22px;margin:0 -16px 16px;border-radius:0 0 26px 26px}
+.top small{display:block;font-size:14px;font-weight:600;opacity:.75}
+.top h1{margin:2px 0 0;font-size:32px;line-height:1.05;letter-spacing:-.02em;font-weight:800}
+.top p{margin:6px 0 0;font-size:15px;opacity:.8}
+.toprow{display:flex;align-items:center;gap:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:0;border-radius:99px;background:rgb(0 0 0/.1);color:var(--sunink);font-weight:700;font-size:15px;cursor:pointer;flex:none}
+.back{width:44px;height:44px;border-radius:14px;border:0;background:rgb(0 0 0/.08);color:var(--sunink);display:grid;place-items:center;cursor:pointer;flex:none}
+h2{font-size:18px;margin:22px 0 10px;letter-spacing:-.01em}
+.card{background:var(--card);border-radius:20px;padding:16px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1}
+.name{font-weight:700;font-size:16px;line-height:1.25}
+.sub{color:var(--mute);font-size:14px}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:var(--sun);color:var(--sunink);flex:none}
+.tag{display:inline-block;font-size:13px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);margin-left:4px;vertical-align:1px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.seg3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.btn{min-height:48px;border-radius:14px;border:0;padding:0 16px;font-weight:700;cursor:pointer;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--line);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn:focus-visible,.chip:focus-visible,.nav button:focus-visible,.day:focus-visible,.go:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.btn.pri{background:var(--blue);color:var(--onblue);box-shadow:none}
+.btn.dark{background:var(--ink);color:var(--bg);box-shadow:none}
+.btn.on-p{background:var(--p);color:#fff;box-shadow:none}
+.btn.on-a{background:var(--a);color:#fff;box-shadow:none}
+.btn.full{width:100%}
+.btn.sm{min-height:40px;font-size:14px;padding:0 12px}
+.btn:active{transform:scale(.98)}
+.note{font-size:14px;color:var(--mute);margin-top:10px;display:flex;gap:6px;align-items:center}
+.alert{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--card);margin-bottom:10px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:7px}
+.x{width:36px;height:36px;border:0;border-radius:10px;background:none;color:var(--mute);cursor:pointer;flex:none;font-size:20px;line-height:1}
+.big{font-size:clamp(34px,10vw,44px);font-weight:800;letter-spacing:-.03em;line-height:1.05;white-space:nowrap}
+.lines div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+.lines div:first-child{border-top:0}
+.lines b{white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.lines .tot{font-weight:800;font-size:17px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.chip{flex:none;min-height:40px;padding:0 16px;border-radius:999px;border:0;background:var(--card);font-weight:600;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--bg)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal .h{text-align:center;font-size:13px;color:var(--mute);font-weight:600}
+.day{aspect-ratio:1;border:0;border-radius:12px;background:var(--bg);font-weight:700;font-size:15px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:inset 0 0 0 1px var(--line);position:relative}
+.day.off{background:transparent;box-shadow:none;color:var(--mute);font-weight:500}
+.day.today{box-shadow:inset 0 0 0 2.5px var(--blue)}
+.day i{width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 1.5px rgb(0 0 0/.25)}
+.day.st{color:#fff;box-shadow:none}
+.day.today.st{box-shadow:0 0 0 2.5px var(--blue)}
+.day .ot{position:absolute;top:3px;right:5px;font-size:10px;font-weight:800}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mhead b{font-size:17px}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:var(--bg);cursor:pointer;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--line);flex:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;font-size:14px;color:var(--mute)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%}
+.counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(5.5em,1fr));gap:8px;margin-top:12px}
+.counts div{background:var(--bg);border-radius:12px;padding:8px 10px}
+.counts b{display:block;font-size:20px}
+.counts span{font-size:13px;color:var(--mute)}
+.hist{padding:12px 0;border-top:1px solid var(--line)}
+.hist:first-child{border-top:0}
+.amt{font-weight:800;white-space:nowrap}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.nav{display:grid;border-top:1px solid var(--line);background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav button{border:0;background:none;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;font-weight:600;color:var(--mute);cursor:pointer;position:relative}
+.nav button.on{color:var(--ink)}
+.nav button.on svg{background:var(--sun);color:var(--sunink);border-radius:999px}
+.nav svg{width:52px;height:30px;padding:4px 14px}
+.nav .n{position:absolute;top:6px;left:calc(50% + 8px);min-width:20px;height:20px;border-radius:10px;background:var(--a);color:#fff;font-size:12px;display:grid;place-items:center;padding:0 5px}
+.shade{position:absolute;inset:0;background:rgb(0 0 0/.45);display:none;align-items:flex-end;z-index:5}
+.shade.open{display:flex}
+.sheet{background:var(--bg);width:100%;border-radius:26px 26px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom,0px));max-height:92%;overflow-y:auto}
+.sheet:before{content:"";display:block;width:44px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h3{margin:0 0 6px;font-size:22px;letter-spacing:-.02em}
+.sheet h4{margin:20px 0 4px;font-size:16px}
+.opts{display:grid;gap:8px;margin-top:14px}
+label{display:block;font-size:14px;font-weight:600;margin:14px 0 6px}
+input,select,textarea{width:100%;min-height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);padding:10px 12px;font-size:16px}
+textarea{min-height:96px;resize:vertical}
+input[type=file]{padding:10px;min-height:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.okm{color:var(--p);font-size:14px;font-weight:600;margin-top:6px}
+.warnbox{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--l) 18%,var(--bg));box-shadow:inset 0 0 0 1.5px var(--l);margin-top:10px;font-size:15px}
+.warnbox svg{flex:none;color:#b45309}
+.err{color:var(--a);font-size:14px;font-weight:600;margin-top:6px}
+.daysel{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.daysel button{min-height:44px;border-radius:12px;border:0;background:var(--card);font-weight:700;cursor:pointer}
+.daysel button.on{background:var(--ink);color:var(--bg)}
+.stsel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stsel button{min-height:48px;border-radius:12px;border:0;background:var(--card);font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 6px}
+.stsel button i{width:10px;height:10px;border-radius:50%;flex:none}
+.stsel button.on{box-shadow:inset 0 0 0 2.5px var(--ink)}
+.step{display:flex;align-items:center;gap:10px}
+.step b{min-width:4ch;text-align:center;font-size:20px}
+.code{font-size:38px;font-weight:800;letter-spacing:.06em;text-align:center;padding:18px;border-radius:18px;background:var(--sun);color:var(--sunink);margin:14px 0}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;background:var(--ink);color:var(--bg);padding:14px 16px;border-radius:14px;font-weight:600;z-index:6;opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.welcome{flex:1;display:flex;flex-direction:column;background:var(--sun);color:var(--sunink);padding:calc(28px + env(safe-area-inset-top,0px)) 24px 28px;overflow-y:auto}
+.welcome h1{font-size:46px;line-height:1;letter-spacing:-.03em;margin:18px 0 8px}
+.welcome p{font-size:17px;margin:0;max-width:30ch}
+.book{flex:1;min-height:150px;display:grid;place-items:center}
+.book svg{width:min(260px,70%)}
+.wbtn{display:flex;align-items:center;gap:14px;width:100%;min-height:76px;border:0;border-radius:20px;padding:12px 18px;margin-top:10px;background:var(--sunink);color:#fff;text-align:left;cursor:pointer}
+.wbtn.alt{background:#fff;color:var(--sunink)}
+.wbtn b{display:block;font-size:19px}
+.wbtn span{font-size:15px;opacity:.75}
+.fine{font-size:13px;opacity:.7;margin-top:14px;text-align:center}
+.empty{color:var(--mute);font-size:15px;padding:8px 0}
+.live{background:#15161a;color:#f3f2ee;border-radius:24px;padding:16px;margin-bottom:12px;box-shadow:inset 0 0 0 2px var(--p)}
+.live.warn{box-shadow:inset 0 0 0 2px var(--l)}
+.live.bad{box-shadow:inset 0 0 0 2px var(--a)}
+.live .av{background:#ffd23f}
+.live .lk{font-size:13px;font-weight:700;color:#ffd23f}
+.live.warn .lk{color:#ffb547}
+.live.bad .lk{color:#ff8a8d}
+.live .name{font-size:18px}
+.live .time{font-size:28px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.live .note{color:#c9cbd1}
+.live .maplink{color:#c9d2ff}
+.live .btn:not(.pri):not(.on-p):not(.on-a){background:#23252b;color:#f3f2ee;box-shadow:none}
+.inout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.inout div{background:color-mix(in srgb,currentColor 8%,transparent);border-radius:12px;padding:8px 10px}
+.inout span{display:block;font-size:12px;opacity:.75}
+.inout b{font-size:17px;white-space:nowrap}
+.map{display:block;width:100%;height:auto;aspect-ratio:320/170;border-radius:16px;margin-top:12px}
+.pulse{transform-box:fill-box;transform-origin:center;animation:pl 1.8s ease-out infinite;opacity:.5}
+@keyframes pl{from{transform:scale(1);opacity:.55}to{transform:scale(3.2);opacity:0}}
+.ckmeta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;font-size:14px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-weight:700;font-size:14px;color:#fff;white-space:nowrap}
+.badge.in{background:var(--p)}
+.badge.out{background:var(--a)}
+.maplink{display:inline-block;margin-top:8px;font-size:14px;font-weight:600;color:var(--blue);min-height:32px;padding-top:6px}
+.why{margin-top:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,currentColor 9%,transparent);font-size:15px}
+.ask{margin-top:12px;font-weight:700}
+.logl{display:flex;gap:10px;font-size:14px;padding-top:8px}
+.logl b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.radio{display:flex;gap:12px;align-items:flex-start;margin:0;padding:12px;border-radius:14px;box-shadow:inset 0 0 0 1.5px var(--line);font-weight:400;cursor:pointer}
+.radio input{width:22px;min-height:22px;height:22px;margin:2px 0 0;flex:none;accent-color:var(--blue)}
+.switch{display:flex;gap:14px;align-items:center;width:100%;margin-top:12px;padding:12px 0 0;border:0;border-top:1px solid var(--line);background:none;text-align:left;font-size:14px;color:var(--mute);cursor:pointer}
+.switch b{color:var(--ink);font-size:15px}
+.switch i{flex:none;width:52px;height:30px;border-radius:99px;background:var(--line);position:relative}
+.switch i:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.switch[aria-checked=true] i{background:var(--p)}
+.switch[aria-checked=true] i:after{left:25px}
+.ckday{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.spin{width:48px;height:48px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--blue);margin:22px auto;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:-4px 0 14px}
+.subtabs button{min-height:44px;padding:0 8px;border-radius:12px;border:0;background:var(--card);font-weight:700;font-size:14px;cursor:pointer}
+.subtabs button.on{background:var(--ink);color:var(--bg)}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,Menlo,monospace;background:var(--card);border-radius:14px;padding:14px;max-height:320px;overflow-y:auto;margin:10px 0 0}
+.thread{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.bub{max-width:82%;padding:10px 14px;border-radius:18px;background:var(--card);font-size:16px}
+.bub.me{align-self:flex-end;background:var(--blue);color:var(--onblue)}
+.bub small{display:block;font-size:12px;opacity:.7;margin-top:2px}
+.pinwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--sun);color:var(--sunink);padding:24px}
+.pdots{display:flex;gap:14px;margin:20px 0}
+.pdots i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--sunink)}
+.pdots i.on{background:var(--sunink)}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.pad button{height:72px;border-radius:50%;border:0;background:rgb(255 255 255/.55);font-size:26px;font-weight:700;cursor:pointer;color:var(--sunink)}
+.shake{animation:sh .35s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.thumb{max-width:100%;border-radius:14px;margin-top:10px}
+/* worker mode: larger, simpler */
+.wk main{font-size:18px}
+.wk .top h1{font-size:36px}
+.wk .sub{font-size:16px}
+.wk .name{font-size:19px}
+.wk .btn{min-height:58px;font-size:18px;border-radius:16px}
+.wk .nav button{font-size:15px;min-height:70px}
+.wk .day{font-size:17px}
+.go{display:flex;flex-direction:column;align-items:center;justify-content:center;width:min(240px,70vw);aspect-ratio:1;border-radius:50%;border:0;margin:8px auto 4px;cursor:pointer;background:var(--sun);color:var(--sunink);box-shadow:0 10px 0 #d9ad12,0 0 0 10px color-mix(in srgb,var(--sun) 25%,transparent);font-weight:800;font-size:34px;letter-spacing:-.02em;line-height:1.05}
+.go small{display:block;font-size:16px;font-weight:600;letter-spacing:0;margin-top:6px;opacity:.8}
+.go.out{background:#15161a;color:#fff;box-shadow:0 10px 0 #000,0 0 0 10px rgb(21 22 26/.15)}
+.go:active{transform:translateY(6px);box-shadow:0 4px 0 #d9ad12}
+.state{text-align:center;padding:8px 0 4px}
+.state .ic{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px;color:#fff}
+.state h3{margin:0;font-size:26px;letter-spacing:-.02em}
+.state p{margin:6px 0 0;color:var(--mute);font-size:17px}
+.qk{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qk button{min-height:76px;border:0;border-radius:18px;background:var(--card);font-weight:700;font-size:17px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px}
+.money{background:var(--sun);color:var(--sunink);border-radius:24px;padding:20px;margin-bottom:12px}
+.money .big{font-size:clamp(40px,12vw,52px)}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:0;border-radius:99px;background:rgb(0 0 0/.1);color:var(--sunink);font-weight:700;font-size:15px;cursor:pointer;flex:none;position:relative}
+.pn{min-width:20px;height:20px;border-radius:10px;background:var(--a);color:#fff;font-size:12px;display:grid;place-items:center;padding:0 5px}
+.offchip,.nban{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;margin-bottom:12px;font-size:16px}
+.offchip{background:color-mix(in srgb,var(--l) 20%,var(--bg));box-shadow:inset 0 0 0 1.5px var(--l)}
+.nban{background:var(--card);box-shadow:inset 0 0 0 1.5px var(--blue)}
+.offchip svg,.nban svg{flex:none}
+.crewrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.crewsel{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);margin:0;font-weight:400;cursor:pointer;font-size:18px}
+.crewsel input{width:28px;height:28px;min-height:28px;flex:none;accent-color:var(--blue)}
+.plmap{height:300px;border-radius:16px;overflow:hidden;margin-top:10px;background:#dde3e8;position:relative;z-index:0}
+.linkbox{font:14px/1.4 ui-monospace,Menlo,monospace;background:var(--card);border-radius:12px;padding:12px;margin-top:12px;overflow-wrap:anywhere}
+.paybox{background:var(--card);border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:inset 0 0 0 2px var(--p)}
+.tour{flex:1;display:flex;flex-direction:column;background:var(--sun);color:var(--sunink);padding:calc(18px + env(safe-area-inset-top,0px)) 24px 24px;overflow-y:auto}
+.tour .art{flex:1;min-height:210px;display:grid;place-items:center}
+.disc{width:170px;height:170px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--sunink);box-shadow:0 8px 0 rgb(0 0 0/.08)}
+.tour h1{font-size:34px;line-height:1.05;letter-spacing:-.02em;margin:0 0 10px}
+.tour p{font-size:18px;margin:0 0 20px;max-width:32ch}
+.dots{display:flex;gap:8px;margin-bottom:18px}
+.dots i{width:10px;height:10px;border-radius:6px;background:rgb(0 0 0/.18)}
+.dots i.on{background:var(--sunink);width:26px}
+.go.mini{width:170px;font-size:28px;margin:0;pointer-events:none}
+.tour .btn{background:#fff;color:var(--sunink);box-shadow:none}
+.tour .btn.dark{background:var(--sunink);color:#fff}
+.skip{align-self:flex-end;border:0;background:rgb(0 0 0/.08);border-radius:99px;min-height:40px;padding:0 16px;font-weight:700;cursor:pointer;color:var(--sunink)}
+.minimoney{background:#fff;border-radius:22px;padding:18px 22px;color:var(--sunink);box-shadow:0 8px 0 rgb(0 0 0/.08)}
+.minimoney b{display:block;font-size:40px;letter-spacing:-.03em}
+.miniqk{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:250px}
+.miniqk span{background:#fff;border-radius:14px;padding:14px 8px;text-align:center;font-weight:700}
+/* Leaflet (estilos mínimos) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;outline:0;touch-action:none;-webkit-tap-highlight-color:transparent;font:13px/1.4 system-ui,sans-serif}
+.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow{user-select:none;-webkit-user-drag:none}
+.leaflet-container img.leaflet-tile{max-width:none!important;max-height:none!important;width:256px;height:256px}
+.leaflet-tile{visibility:hidden}
+.leaflet-tile-loaded{visibility:inherit}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-pane{z-index:400}
+.leaflet-tile-pane{z-index:200}
+.leaflet-overlay-pane{z-index:400}
+.leaflet-marker-pane{z-index:600}
+.leaflet-tooltip-pane{z-index:650}
+.leaflet-popup-pane{z-index:700}
+.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}
+.leaflet-interactive{cursor:pointer}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}
+.leaflet-right{right:0}
+.leaflet-bottom{bottom:0}
+.leaflet-left{left:0}
+.leaflet-top .leaflet-control{margin-top:10px}
+.leaflet-left .leaflet-control{margin-left:10px}
+.leaflet-right .leaflet-control{float:right;margin-right:10px}
+.leaflet-bottom .leaflet-control{margin-bottom:0}
+.leaflet-bar{box-shadow:0 1px 5px rgb(0 0 0/.4);border-radius:8px;overflow:hidden}
+.leaflet-bar a{background:#fff;border-bottom:1px solid #ccc;width:40px;height:40px;line-height:40px;display:block;text-align:center;text-decoration:none;color:#15161a;font:bold 20px system-ui,sans-serif}
+.leaflet-control-attribution{background:rgb(255 255 255/.8);padding:0 5px;color:#333;font-size:11px}
+.leaflet-control-attribution a{color:#333}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-tooltip{position:absolute;padding:4px 8px;background:#fff;color:#15161a;border-radius:6px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgb(0 0 0/.4);font-weight:600}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}.pulse{animation:none;opacity:0}.spin{animation-duration:3s}.shake{animation:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+{
+/* ---------- constantes ---------- */
+const DOW=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DS=['D','L','M','M','J','V','S'];
+const DAB=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MON=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const ST={P:{t:'Presente',w:'Viniste',c:'var(--p)'},A:{t:'Ausente',w:'No viniste',c:'var(--a)'},L:{t:'Licencia médica',w:'Licencia médica',c:'var(--l)'},V:{t:'Vacaciones',w:'Vacaciones',c:'var(--v)'},F:{t:'Feriado',w:'Feriado',c:'var(--f)'},X:{t:'Día libre',w:'Día libre',c:'var(--x)'}};
+const LABOR=['Labor doméstica','Jardinería','Baby sitting','Cuidado de personas','Trabajo agrícola','Otros'];
+const MARITAL=['Soltero/a','Casado/a','Divorciado/a','Viudo/a','Conviviente civil'];
+const AFP=['AFP Capital','AFP Cuprum','AFP Habitat','AFP Modelo','AFP PlanVital','AFP ProVida','AFP Uno','IPS / Pensionado','No aplica / Sin AFP'];
+const SALUD=['FONASA','ISAPRE Banmédica','ISAPRE Colmena','ISAPRE Consalud','ISAPRE CruzBlanca','ISAPRE Esencial','ISAPRE Nueva Masvida','ISAPRE Vida Tres','Otra ISAPRE','No aplica'];
+const BANKS=['BancoEstado','Banco de Chile','Banco Santander','BCI','Scotiabank','Itaú','Banco Falabella','Banco Ripley','Banco BICE','Tenpo / Mercado Pago','Otro'];
+const ACCT=['CuentaRUT','Cuenta Vista','Cuenta Corriente','Cuenta de Ahorro'];
+const METHODS=['Transferencia','Efectivo','Depósito','Otro'];
+const DOCCAT=['Contrato de trabajo','Anexo de contrato','Comprobante Previred','Liquidación de sueldo','Comprobante de pago','Licencia médica','Permiso / Vacaciones','Finiquito','Cédula de identidad','Otros'];
+const CAUSAL=[['159-1','Art. 159 N° 1 · Mutuo acuerdo'],['159-2','Art. 159 N° 2 · Renuncia del trabajador'],['159-4','Art. 159 N° 4 · Vencimiento del plazo'],['160','Art. 160 · Incumplimiento grave'],['163','Art. 163 bis / desahucio del empleador']];
+const QUICK=[['Voy atrasada','Hoy voy a llegar un poco tarde.'],['Hoy no puedo ir','Hoy no voy a poder ir a trabajar.'],['Estoy enferma','Me siento mal / estoy enferma. Te aviso cómo sigo.'],['Necesito un permiso','Necesito pedirte un permiso. ¿Podemos hablar?']];
+const KEY='jornada_v7';
+const T=new Date();T.setHours(12,0,0,0);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const TODAY=iso(T);
+const MK=TODAY.slice(0,7);
+const clp=n=>{n=Math.round(+n||0);return(n<0?'-$':'$')+Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dOf=s=>new Date(s+'T12:00');
+const fmtD=s=>{const d=dOf(s);return DAB[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()].slice(0,3)};
+const fmtL=s=>{const d=dOf(s);return d.getDate()+' de '+MON[d.getMonth()]+' de '+d.getFullYear()};
+const fmtS=s=>s?s.split('-').reverse().join('/'):'—';
+const mkLabel=mk=>{const[y,m]=mk.split('-');return MON[+m-1]+' '+y};
+const mkShift=(mk,n)=>{const[y,m]=mk.split('-').map(Number);const d=new Date(y,m-1+n,1,12);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+const tmin=t=>{const[h,m]=(t||'0:0').split(':').map(Number);return h*60+m};
+const dur=m=>{m=Math.max(0,Math.round(m));return Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':'')};
+const now=()=>{const n=new Date();return pad(n.getHours())+':'+pad(n.getMinutes())};
+const uid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const ic={
+home:'<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+cal:'<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+pay:'<rect x="3" y="6" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12.5" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/>',
+team:'<circle cx="9" cy="9" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 20c.6-3.4 3-5 6-5s5.4 1.6 6 5M16 5.5a3 3 0 010 6M18 15c1.8.6 2.8 2.2 3 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+me:'<circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 20c.8-3.8 3.6-5.6 7-5.6s6.2 1.8 7 5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+msg:'<path d="M4 6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H10l-5 4v-4H6a2 2 0 01-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+gear:'<circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+l:'<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+r:'<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+ok:'<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+clock:'<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+warn:'<path d="M12 4l9 16H3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+moon:'<path d="M19 14.5A7.5 7.5 0 019.5 5a7.5 7.5 0 109.5 9.5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>',
+bell:'<path d="M6 16V11a6 6 0 0112 0v5l2 2H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="2"/>',
+help:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17v.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+nowifi:'<path d="M2 8.5a15 15 0 0120 0M5.5 12a10 10 0 0113 0M9 15.5a5 5 0 016 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.3" fill="currentColor"/><path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/>',
+flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>',
+link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+doc:'<path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 3v4h4M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+crew:'<circle cx="6.5" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 19c.4-2.8 1.8-4.3 4-4.3M21.5 19c-.4-2.8-1.8-4.3-4-4.3M7.5 20c.6-3.5 2.2-5 4.5-5s3.9 1.5 4.5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+lock:'<rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10.5V8a4 4 0 018 0v2.5" fill="none" stroke="currentColor" stroke-width="2"/>'
+};
+const svg=(k,s=24)=>'<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" aria-hidden="true">'+ic[k]+'</svg>';
+
+/* ---------- RUT ---------- */
+const cleanRut=v=>String(v||'').replace(/[^0-9kK]/g,'').toUpperCase().slice(0,9);
+const fmtRut=v=>{const c=cleanRut(v);if(c.length<2)return c;return c.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'-'+c.slice(-1)};
+function rutCheck(v){const c=cleanRut(v);if(!c)return{ok:false,msg:'Ingresa el RUT.'};const b=c.slice(0,-1),d=c.slice(-1);if(!/^\d+$/.test(b))return{ok:false,msg:'Antes del guion solo van números.'};if(b.length<7||b.length>8||+b<1000000)return{ok:false,msg:'El RUT debe tener 7 u 8 números más el dígito verificador.'};let s=0,m=2;for(let i=b.length-1;i>=0;i--){s+=+b[i]*m;m=m===7?2:m+1}const r=11-s%11,exp=r===11?'0':r===10?'K':String(r);if(d!==exp)return{ok:false,msg:'El dígito verificador no calza: debería terminar en -'+exp+'.'};return{ok:true,msg:'RUT válido',body:b}}
+const rutHint=v=>{if(!cleanRut(v))return'';const r=rutCheck(v);return '<div class="'+(r.ok?'okm':'err')+'">'+(r.ok?'✓ ':'')+r.msg+'</div>'};
+function rutOk(v){const c=cleanRut(v);if(c.length<7)return false;const b=c.slice(0,-1),dv=c.slice(-1);if(!/^\d+$/.test(b))return false;let s=0,m=2;for(let i=b.length-1;i>=0;i--){s+=+b[i]*m;m=m===7?2:m+1}const r=11-s%11;return dv===(r===11?'0':r===10?'K':String(r))}
+
+/* ---------- datos de ejemplo ---------- */
+function offM(ref,dx,dy){return{lat:ref.lat+dy/110540,lng:ref.lng+dx/(111320*Math.cos(ref.lat*Math.PI/180))}}
+function seed(){
+  const y=T.getFullYear(),m=T.getMonth(),d=T.getDate();
+  const end=new Date(T);end.setDate(end.getDate()+15);
+  const home={lat:-33.40870,lng:-70.56800},farm={lat:-33.6705,lng:-70.5662};
+  const casa=[{type:'point',name:'Casa',lat:home.lat,lng:home.lng,radius:150}];
+  const huerto=[{type:'area',name:'Huerto Pirque',pts:[offM(farm,-220,-130),offM(farm,230,-150),offM(farm,250,140),offM(farm,-200,160)]}];
+  const mk=(id,p,w,extra)=>Object.assign({id,status:'activo',role:'individual',crew:null,term:null,invite:null,p,w,prev:{afp:'AFP Modelo',salud:'FONASA'},bank:{name:'BancoEstado',type:'CuentaRUT',number:p.rut.replace(/\D/g,'').slice(0,-1)}},extra||{});
+  const agro=(name,rut,phone,rate)=>({p:{name,rut,nat:'Chilena',birth:'',marital:'Soltero/a',address:'',comuna:'Pirque',email:'',phone},w:{labor:'Trabajo agrícola',mode:'Puertas afuera',functions:'Labores de huerto: cosecha, poda, riego y limpieza de hileras.',modality:'Diario',rate,freq:'Semanal',transport:0,meal:0,days:[1,2,3,4,5,6],start:'08:00',end:'17:00',lunch:60,contract:'Plazo fijo',endDate:'2027-03-31',startDate:'2026-10-01',places:JSON.parse(JSON.stringify(huerto))}});
+  const S={role:null,wid:null,tab:'home',detail:null,sub:'asis',mk:MK,mo:0,eqTab:'activo',strict:true,pin:'',lastBackup:null,dismissed:[],device:null,toured:{},outbox:[],notifs:[],notifyOn:false,
+    mode:'demo',emp:{name:'Sebastián Andrés Valdés Herrera',rut:'15.432.890-4',nat:'Chilena',marital:'Casado/a',prof:'Ingeniero comercial',address:'Av. Apoquindo 6420, depto 804',comuna:'Las Condes',city:'Santiago, Región Metropolitana',email:'empleador@ejemplo.cl',phone:'+56 9 9123 4567',lat:home.lat,lng:home.lng,radius:150,homeSet:true},
+    workers:[
+      mk('w1',{name:'María Teresa González Rojas',rut:'14.523.890-0',nat:'Chilena',birth:'1982-05-14',marital:'Casado/a',address:'Av. Grecia 4210',comuna:'Peñalolén',email:'mariateresa.gonzalez@ejemplo.cl',phone:'+56 9 8421 5530'},
+        {labor:'Labor doméstica',mode:'Puertas afuera',functions:'Aseo y orden del hogar, lavado y planchado, preparación de almuerzos y apoyo en compras.',modality:'Mensual',rate:550000,freq:'Mensual',transport:30000,meal:0,days:[1,2,3,4,5],start:'08:30',end:'17:30',lunch:60,contract:'Indefinido',endDate:'',startDate:'2026-02-01',places:JSON.parse(JSON.stringify(casa))},
+        {prev:{afp:'AFP Habitat',salud:'FONASA'},invite:{token:'jmaria4821x',created:'2026-11-02',used:'2026-11-03'}}),
+      mk('w2',{name:'Rosa Elena Morales Fuentes',rut:'16.842.110-9',nat:'Chilena',birth:'1987-09-22',marital:'Soltero/a',address:'Pasaje Los Aromos 842',comuna:'La Florida',email:'rosa.morales@ejemplo.cl',phone:'+56 9 6510 8824'},
+        {labor:'Jardinería',mode:'Puertas afuera',functions:'Corte de césped, riego, mantención de plantas, poda menor y limpieza de patios.',modality:'Diario',rate:35000,freq:'Semanal',transport:0,meal:0,days:[1,3,5],start:'09:00',end:'17:00',lunch:60,contract:'Plazo fijo',endDate:iso(end),startDate:'2026-06-01',places:JSON.parse(JSON.stringify(casa))},
+        {bank:{name:'Banco Falabella',type:'Cuenta Vista',number:'5-00294812-3'},invite:{token:'jrosa7350k2',created:TODAY,used:null}}),
+      Object.assign(mk('w3',...Object.values(agro('Pedro Soto Muñoz','13.876.452-4','+56 9 7712 3344',32000))),{role:'capataz',invite:{token:'jpedro5521q',created:'2026-10-01',used:'2026-10-02'}}),
+      Object.assign(mk('w4',...Object.values(agro('Juan Pérez Lagos','18.234.567-9','',28000))),{role:'miembro',crew:'w3'}),
+      Object.assign(mk('w5',...Object.values(agro('Luis Rojas Díaz','17.456.321-7','+56 9 5521 0098',28000))),{role:'miembro',crew:'w3'}),
+      Object.assign(mk('w6',...Object.values(agro('Carmen Vera Tapia','19.876.543-0','',28000))),{role:'miembro',crew:'w3'})],
+    att:{},ck:{},pays:[],docs:[],msgs:[],log:[]};
+  const pm=mkShift(MK,-1),lastPrev=iso(new Date(y,m,0,12));
+  for(const w of S.workers){
+    S.att[w.id]={};S.ck[w.id]={};
+    let r=+w.id.slice(1)*7+3;const rnd=()=>(r=r*16807%2147483647)/2147483647;
+    const cur=[];const ctr=w.w.places[0].type==='area'?farm:home;
+    for(let dt=new Date(y,m-1,1,12);iso(dt)<TODAY;dt.setDate(dt.getDate()+1)){
+      if(!w.w.days.includes(dt.getDay()))continue;
+      const s=iso(dt);if(s<w.w.startDate)continue;S.att[w.id][s]={s:'P',ot:0,note:''};if(dt.getMonth()===m)cur.push(s);
+    }
+    if(w.id==='w1'){
+      if(cur[2])S.att.w1[cur[2]]={s:'A',ot:0,note:'Trámite personal'};
+      if(cur[7])S.att.w1[cur[7]]={s:'L',ot:0,note:'Licencia por resfrío'};
+      if(cur[4])S.att.w1[cur[4]]={s:'P',ot:2,note:'Se quedó 2 h por una visita',edited:cur[5]||cur[4]};
+    }
+    if(w.id==='w5'&&cur[3])S.att.w5[cur[3]]={s:'A',ot:0,note:'Informado por capataz Pedro'};
+    for(const[s,a]of Object.entries(S.att[w.id])){
+      if(a.s!=='P')continue;const far=w.id==='w1'&&s===cur[5];
+      const st=tmin(w.w.start)-12+Math.floor(rnd()*20),en=tmin(w.w.end)+(a.ot?a.ot*60:Math.floor(rnd()*25));
+      const p=far?offM(ctr,1300,-1400):offM(ctr,rnd()*80-40,rnd()*60-30),q=offM(ctr,rnd()*60-30,rnd()*50-25);
+      const by=w.role==='miembro'?w.crew:undefined;
+      const c={in:{wid:w.id,t:pad(Math.floor(st/60))+':'+pad(st%60),lat:p.lat,lng:p.lng,acc:far?35:8+Math.round(rnd()*12),st:'ok',by},out:{wid:w.id,t:pad(Math.floor(en/60))+':'+pad(en%60),lat:q.lat,lng:q.lng,acc:10,by}};
+      if(far){c.in.st='acc';c.in.reason='Pasé a la feria a comprar lo que me encargaron.';c.in.dec='08:41';S.log.push({wid:w.id,date:s,t:c.in.t,text:'Llegada marcada fuera de la casa (a 1,9 km), con motivo'},{wid:w.id,date:s,t:'08:41',text:'Empleador aceptó la excepción'})}
+      S.ck[w.id][s]=c;
+    }
+    if(cur[4]&&w.id==='w1')S.log.push({wid:'w1',date:cur[4],t:'18:05',text:'Empleador agregó 2 h extra'});
+    const prevDays=Object.entries(S.att[w.id]).filter(([k,a])=>k.startsWith(pm)&&a.s==='P').length;
+    if(w.w.modality==='Mensual')S.pays.push({id:'pp'+w.id,wid:w.id,type:'Pago de sueldo',method:'Transferencia',amount:w.w.rate+w.w.transport,date:lastPrev,note:'Sueldo '+mkLabel(pm),receipt:null,recv:{date:lastPrev,t:'19:10'}});
+    else if(prevDays)S.pays.push({id:'pp'+w.id,wid:w.id,type:'Pago de sueldo',method:w.id==='w2'?'Efectivo':'Transferencia',amount:prevDays*w.w.rate,date:lastPrev,note:'Días de '+mkLabel(pm),receipt:null,recv:{date:lastPrev,t:'18:30'}});
+  }
+  if(T.getDay()>=1&&T.getDay()<=6){
+    const fp=offM(farm,30,-20);S.ck.w3[TODAY]={in:{wid:'w3',t:'07:52',lat:fp.lat,lng:fp.lng,acc:9,st:'ok'}};
+    for(const id of['w4','w6'])S.ck[id][TODAY]={in:{wid:id,t:'07:55',lat:fp.lat,lng:fp.lng,acc:9,st:'ok',by:'w3'}};
+    S.notifs.push({id:'n1',to:'e',text:'Pedro marcó la llegada de Juan y Carmen',date:TODAY,t:'07:55',read:false},{id:'n2',to:'e',text:'Pedro llegó a las 07:52 (Huerto Pirque)',date:TODAY,t:'07:52',read:true});
+  }
+  if([1,3,5].includes(T.getDay())){const p=offM(home,28,-18);S.ck.w2[TODAY]={in:{wid:'w2',t:'09:04',lat:p.lat,lng:p.lng,acc:11,st:'ok'}}}
+  S.pays.push({id:'p1',wid:'w1',type:'Anticipo',method:'Transferencia',amount:100000,date:iso(new Date(y,m,Math.min(10,d),12)),note:'Anticipo quincenal acordado',receipt:null,recv:{date:iso(new Date(y,m,Math.min(10,d),12)),t:'20:02'}});
+  S.pays.push({id:'p3',wid:'w2',type:'Pago de sueldo',method:'Transferencia',amount:105000,date:iso(new Date(y,m,Math.min(8,d),12)),note:'Pago semana 1 (3 días)',receipt:null,recv:null});
+  S.docs.push({id:'d1',wid:'w1',cat:'Contrato de trabajo',month:'2026-02',name:'Contrato_Maria_Teresa_Firmado.pdf',data:null,note:'Copia registrada en Mi DT',date:'2026-02-02'});
+  S.msgs.push({id:'m1',wid:'w2',from:'w',text:'¿Puedo cambiar el viernes por el sábado esta semana?',date:TODAY,t:'08:12',read:false});
+  return S;
+}
+const COSF=lat=>Math.cos(lat*Math.PI/180);
+function offset(e,m,ang){return{lat:e.lat+m*Math.cos(ang)/110540,lng:e.lng+m*Math.sin(ang)/(111320*COSF(e.lat))}}
+
+function blankState(){return{role:null,wid:null,tab:'home',detail:null,sub:'asis',mk:MK,mo:0,eqTab:'activo',strict:true,pin:'',lastBackup:null,dismissed:[],device:null,toured:{},outbox:[],notifs:[],notifyOn:false,mode:undefined,
+  emp:{name:'',rut:'',nat:'Chilena',marital:'Soltero/a',prof:'',address:'',comuna:'',city:'Santiago, Región Metropolitana',email:'',phone:'',lat:-33.4489,lng:-70.6693,radius:150,homeSet:false},
+  workers:[],att:{},ck:{},pays:[],docs:[],msgs:[],log:[]}}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!S.workers||!S.emp)S=blankState();
+let locked=!!S.pin;
+let tour=null,joinErr='',crewSel=[],taps=0,tapT=null;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('No se pudo guardar: el teléfono no tiene espacio')}if(S.mode==='cloud'&&me&&sync&&sync.ready){clearTimeout(syncTimer);syncTimer=setTimeout(()=>syncNow(),700)}};
+
+/* ---------- utilidades de dominio ---------- */
+const W=id=>S.workers.find(w=>w.id===id);
+const first=w=>w&&w.p?w.p.name.split(' ')[0]:'—';
+const works=(w,s)=>w.w.days.includes(dOf(s).getDay());
+function xy(ref,p){return{x:(p.lng-ref.lng)*111320*Math.cos(ref.lat*Math.PI/180),y:(p.lat-ref.lat)*110540}}
+function pinPoly(pt,poly){let ins=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>pt.y)!==(b.y>pt.y)&&pt.x<(b.x-a.x)*(pt.y-a.y)/(b.y-a.y)+a.x)ins=!ins}return ins}
+function segD(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy;let t=l?((p.x-a.x)*dx+(p.y-a.y)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+const placesOf=w=>w&&w.w.places&&w.w.places.length?w.w.places:[{type:'point',name:'Casa',lat:S.emp.lat,lng:S.emp.lng,radius:S.emp.radius}];
+const pCenter=pl=>pl.type==='area'?{lat:pl.pts.reduce((a,p)=>a+p.lat,0)/pl.pts.length,lng:pl.pts.reduce((a,p)=>a+p.lng,0)/pl.pts.length}:pl;
+function geo(w,c){let best=null;for(const pl of placesOf(w)){let d;if(pl.type==='area'){const ref=pl.pts[0],P=xy(ref,c),poly=pl.pts.map(q=>xy(ref,q));d=pinPoly(P,poly)?0:Math.min(...poly.map((a,i)=>segD(P,a,poly[(i+1)%poly.length])))-25}else{const v=xy(pl,c);d=Math.hypot(v.x,v.y)-pl.radius}if(!best||d<best.d)best={d,pl}}return{inside:best.d<=0,d:Math.max(0,best.d),place:best.pl.name||'Lugar de trabajo'}}
+function stamp(c){if(c.nogps){c.ins=false;c.d=0;c.pl='';return c}const g=geo(W(c.wid),c);c.ins=g.inside;c.d=Math.round(g.d);c.pl=g.place;return c}
+const inside=c=>c.ins!==undefined?c.ins:(c.nogps?false:geo(W(c.wid),c).inside);
+const dist=c=>c.d!==undefined?c.d:Math.round(geo(W(c.wid),c).d);
+function areaHa(p){const ref=p.pts[0],q=p.pts.map(x=>xy(ref,x));let a=0;for(let i=0;i<q.length;i++){const j=(i+1)%q.length;a+=q[i].x*q[j].y-q[j].x*q[i].y}a=Math.abs(a)/2;return a>=10000?(a/10000).toFixed(1).replace('.',',')+' ha':Math.round(a)+' m²'}
+const placesText=w=>placesOf(w).map(p=>p.type==='area'?'el área demarcada «'+p.name+'» ('+areaHa(p)+')':(p.name==='Casa'?(empAddr()||'el domicilio del empleador'):'«'+p.name+'»')+' (radio de '+p.radius+' m)').join('; ');
+const fmtM=m=>m<1000?Math.round(m)+' m':(m/1000).toFixed(1).replace('.',',')+' km';
+const crewOf=cid=>active().filter(x=>x.role==='miembro'&&x.crew===cid);
+const capList=()=>active().filter(x=>x.role==='capataz');
+const newTok=()=>'j'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+function sysNotify(text){try{if(!S.notifyOn||!('Notification' in window)||Notification.permission!=='granted')return;if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.ready.then(r=>r.showNotification('Jornada',{body:text,icon:'icon-192.png',badge:'icon-192.png'}));else new Notification('Jornada',{body:text})}catch(e){}}
+function notify(to,text,o){o=o||{};if(o.id&&S.notifs.some(n=>n.id===o.id))return;S.notifs.unshift({id:o.id||uid('n'),to,text,date:TODAY,t:now(),read:!!o.quiet});S.notifs=S.notifs.slice(0,200);const here=S.device?S.device.wid:(S.role==='emp'?'e':null);if(to===here)sysNotify(text)}
+const gmaps=c=>'https://www.google.com/maps?q='+c.lat.toFixed(6)+','+c.lng.toFixed(6);
+const empAddr=()=>[S.emp.address,S.emp.comuna,S.emp.city].filter(Boolean).join(', ');
+const log=(wid,date,text)=>S.log.push({id:uid('l'),wid,date,t:now(),text});
+const phoneWa=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===9&&d[0]==='9')d='56'+d;return d};
+const wa=(p,t)=>'https://wa.me/'+phoneWa(p)+'?text='+encodeURIComponent(t);
+const hoursDay=w=>Math.max(1,(tmin(w.w.end)-tmin(w.w.start)-(+w.w.lunch||0))/60);
+function otRate(w){const r=+w.w.rate||0;if(w.w.modality==='Por hora')return Math.round(r*1.5);if(w.w.modality==='Diario')return Math.round(r/hoursDay(w)*1.5);return Math.round(r/180*1.5)}
+function dailyRef(w){const r=+w.w.rate||0;return w.w.modality==='Mensual'?Math.round(r/30):w.w.modality==='Diario'?r:Math.round(r*hoursDay(w))}
+function fin(w,mk){
+  const e=Object.entries(S.att[w.id]||{}).filter(([k])=>k.startsWith(mk));
+  const c={P:0,A:0,L:0,V:0,F:0,X:0};let ot=0;
+  for(const[,a]of e){if(c[a.s]!==undefined)c[a.s]++;ot+=+a.ot||0}
+  const r=+w.w.rate||0;let base=0,absent=0;
+  if(w.w.modality==='Mensual'){if(e.length){base=r;absent=c.A*Math.round(r/30)}}
+  else if(w.w.modality==='Diario')base=c.P*r;else base=Math.round(c.P*hoursDay(w)*r);
+  const allow=e.length?(+w.w.transport||0)+(+w.w.meal||0):0,otPay=Math.round(ot*otRate(w));
+  const gross=Math.max(0,base-absent)+otPay+allow;
+  const mv=S.pays.filter(p=>p.wid===w.id&&p.date.startsWith(mk));
+  const sum=t=>mv.filter(p=>p.type===t).reduce((s,p)=>s+(+p.amount||0),0);
+  const paid=sum('Pago de sueldo'),adv=sum('Anticipo'),disc=sum('Descuento');
+  return{c,ot,otPay,allow,base,absent,gross,paid,adv,disc,bal:Math.round(gross-paid-adv-disc)};
+}
+function globalBal(w){const ms=new Set();Object.keys(S.att[w.id]||{}).forEach(k=>ms.add(k.slice(0,7)));S.pays.filter(p=>p.wid===w.id).forEach(p=>ms.add(p.date.slice(0,7)));let t=0;ms.forEach(m=>t+=fin(w,m).bal);return Math.round(t)}
+function vac(w,endISO){const s=dOf(w.w.startDate||TODAY),e=dOf(endISO||TODAY);const taken=Object.values(S.att[w.id]||{}).filter(a=>a.s==='V').length;if(e<s)return{acc:0,taken,avail:0};const acc=Math.round((e-s)/864e5/30.4375*1.25*100)/100;return{acc,taken,avail:Math.max(0,Math.round((acc-taken)*100)/100)}}
+const active=()=>S.workers.filter(w=>w.status==='activo');
+
+/* ---------- UI base ---------- */
+const app=document.getElementById('app');
+let toastT;
+function toast(t){const el=app.querySelector('.toast');if(!el)return;el.textContent=t;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2400)}
+function sheet(html){if(typeof plMap!=='undefined'&&plMap){try{plMap.remove()}catch(e){}plMap=null}const sh=app.querySelector('.shade');sh.querySelector('.sheet').innerHTML=html;sh.classList.add('open');sh.querySelector('.sheet').scrollTop=0}
+function close(){if(typeof plMap!=='undefined'&&plMap){try{plMap.remove()}catch(e){}plMap=null}app.querySelector('.shade')?.classList.remove('open');if(typeof needRender!=='undefined'&&needRender){needRender=false;setTimeout(()=>render(true),0)}}
+const dateLine=()=>DOW[T.getDay()].replace(/^./,c=>c.toUpperCase())+' '+T.getDate()+' de '+MON[T.getMonth()];
+const bellPill=()=>{const n=S.notifs.filter(x=>x.to==='e'&&!x.read).length;return '<button class="pill" data-a="notifs" aria-label="Avisos'+(n?', '+n+' nuevos':'')+'">'+svg('bell',18)+(n?'<span class="pn">'+n+'</span>':'')+'</button>'};
+const top=(h,p,backAct)=>{const right=S.role==='emp'?bellPill():S.role==='wor'?'<button class="pill" data-a="help">'+svg('help',18)+'Ayuda</button>':'';
+  return '<div class="top">'+(backAct?'<div class="toprow"><button class="back" data-a="'+backAct+'" aria-label="Volver">'+svg('l')+'</button><div class="grow"><small>'+dateLine()+'</small><h1 style="font-size:26px">'+h+'</h1></div>'+right+'</div>':'<div class="toprow"><small class="grow" data-a="dtap">'+dateLine()+'</small>'+right+'</div><h1>'+h+'</h1>')+(p?'<p>'+p+'</p>':'')+'</div>'};
+const opt=(arr,v)=>arr.map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join('');
+
+function mapSvg(c,dark){
+  const w=W(c.wid),pls=placesOf(w),ref=pCenter(pls[0]),Wd=320,Hd=170;
+  const shapes=pls.map(pl=>pl.type==='area'?{a:1,pl,pts:pl.pts.map(q=>xy(ref,q))}:{a:0,pl,c:xy(ref,pl),r:pl.radius});
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const add=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)};
+  shapes.forEach(sh=>sh.a?sh.pts.forEach(q=>add(q.x,q.y)):(add(sh.c.x-sh.r,sh.c.y-sh.r),add(sh.c.x+sh.r,sh.c.y+sh.r)));
+  const bw=Math.max(x1-x0,300),bh=Math.max(y1-y0,160),mx=(x0+x1)/2,my=(y0+y1)/2,k=Math.min((Wd-40)/bw,(Hd-40)/bh)*.85;
+  const P=q=>({X:Wd/2+(q.x-mx)*k,Y:Hd/2-(q.y-my)*k});
+  let cp=P(xy(ref,c));const out=cp.X<18||cp.X>Wd-18||cp.Y<18||cp.Y>Hd-18;cp={X:Math.max(18,Math.min(Wd-18,cp.X)),Y:Math.max(18,Math.min(Hd-18,cp.Y))};
+  const col=inside(c)?'var(--p)':'var(--a)',bg=dark?'#23252b':'light-dark(#eef0e8,#22252a)',st=dark?'#33363e':'light-dark(#ffffff,#2e3138)';
+  let g='';for(let i=-3;i<=3;i++)g+='<line x1="0" y1="'+(Hd/2+i*34+8)+'" x2="'+Wd+'" y2="'+(Hd/2+i*34-6)+'" stroke-width="'+(i===1?9:4)+'"/>';
+  for(let i=-5;i<=5;i++)g+='<line x1="'+(Wd/2+i*46)+'" y1="0" x2="'+(Wd/2+i*46+14)+'" y2="'+Hd+'" stroke-width="'+(i===-2?9:4)+'"/>';
+  let sh='',anchor=null;
+  for(const z of shapes){
+    if(z.a){const pts=z.pts.map(P);sh+='<path d="M'+pts.map(q=>q.X.toFixed(1)+' '+q.Y.toFixed(1)).join('L')+'Z" style="fill:color-mix(in srgb,var(--p) 18%,transparent);stroke:var(--p)" stroke-width="2" stroke-dasharray="6 4"/>';const cx=pts.reduce((a,q)=>a+q.X,0)/pts.length,cy=pts.reduce((a,q)=>a+q.Y,0)/pts.length;sh+='<text x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" font-size="12" font-weight="700" style="fill:'+(dark?'#f3f2ee':'var(--ink)')+';paint-order:stroke;stroke:'+(dark?'#23252b':'var(--bg)')+';stroke-width:4px">'+esc(z.pl.name||'Área')+'</text>';anchor=anchor||{X:cx,Y:cy}}
+    else{const q=P(z.c);sh+='<circle cx="'+q.X+'" cy="'+q.Y+'" r="'+Math.max(8,z.r*k)+'" style="fill:color-mix(in srgb,var(--p) 14%,transparent);stroke:var(--p)" stroke-width="1.5" stroke-dasharray="5 4"/><g transform="translate('+q.X+' '+(q.Y-14)+')"><path d="M-11 -2 L0 -12 L11 -2 V10 H-11Z" fill="#15161a" stroke="#fff" stroke-width="1.5"/><rect x="-3" y="3" width="6" height="7" fill="#ffd23f"/></g>';anchor=anchor||q}
+  }
+  return '<svg class="map" viewBox="0 0 '+Wd+' '+Hd+'" role="img" aria-label="Marcado '+(inside(c)?'dentro de '+esc(c.pl||'el lugar'):'a '+fmtM(dist(c))+' del lugar de trabajo')+'"><rect width="'+Wd+'" height="'+Hd+'" style="fill:'+bg+'"/><g style="stroke:'+st+'">'+g+'</g>'+sh+
+  (out&&anchor?'<line x1="'+anchor.X+'" y1="'+anchor.Y+'" x2="'+cp.X+'" y2="'+cp.Y+'" style="stroke:'+col+'" stroke-width="2" stroke-dasharray="4 4"/>':'')+
+  '<circle class="pulse" cx="'+cp.X+'" cy="'+cp.Y+'" r="9" style="fill:'+col+'"/><circle cx="'+cp.X+'" cy="'+cp.Y+'" r="8" style="fill:'+col+';stroke:#fff" stroke-width="3"/></svg>';
+}
+const ckBadge=c=>'<span class="badge '+(inside(c)?'in':'out')+'">'+(inside(c)?svg('ok',16)+'En '+esc(c.pl||'el lugar'):'Fuera · a '+fmtM(dist(c))+(c.pl?' de '+esc(c.pl):''))+'</span>';
+const ckBlock=(c,dark)=>(c.nogps?'<div class="why">Marcado sin ubicación: el GPS no respondió.</div>':mapSvg(c,dark)+'<div class="ckmeta">'+ckBadge(c)+'<span style="opacity:.8">Precisión ±'+c.acc+' m'+(c.sim?' · simulada':'')+'</span></div><a class="maplink" href="'+gmaps(c)+'" target="_blank" rel="noopener">Abrir en Google Maps</a>')+(c.by?'<div class="note">'+svg('crew',16)+'Marcado por el capataz '+esc(first(W(c.by)||{p:{name:'—'}}))+'</div>':'')+(c.off?'<div class="note">'+svg('nowifi',16)+'Marcado sin señal a las '+c.t+(c.rcv?' · llegó al servidor a las '+c.rcv:' · aún no se envía')+'</div>':'');
+function workedMin(c){if(!c||!c.in||!c.out)return null;return tmin(c.out.t)-tmin(c.in.t)}
+
+/* ---------- calendario ---------- */
+function calendar(w,mode){
+  const mk=S.mk,[y,m]=mk.split('-').map(Number),first1=new Date(y,m-1,1,12),n=new Date(y,m,0).getDate(),lead=(first1.getDay()+6)%7,f=fin(w,mk);
+  let h='<div class="card"><div class="mhead"><button class="ib" data-a="mk" data-v="-1" aria-label="Mes anterior">'+svg('l')+'</button><b>'+mkLabel(mk).replace(/^./,c=>c.toUpperCase())+'</b><button class="ib" data-a="mk" data-v="1" aria-label="Mes siguiente">'+svg('r')+'</button></div><div class="cal">'+['L','M','M','J','V','S','D'].map(x=>'<div class="h">'+x+'</div>').join('')+'<div></div>'.repeat(lead);
+  for(let i=1;i<=n;i++){const s=mk+'-'+pad(i),a=S.att[w.id][s],on=works(w,s),c=S.ck[w.id][s];
+    const dotc=c&&c.in?({ok:a?'#fff':'var(--blue)',acc:'#fff',pend:'var(--l)',rej:'#15161a'}[c.in.st]||'#fff'):'';
+    h+='<button class="day'+(on||a?'':' off')+(a?' st':'')+(s===TODAY?' today':'')+'" style="'+(a?'background:'+ST[a.s].c:'')+'" data-a="day" data-v="'+s+'" aria-label="'+i+(a?' '+ST[a.s].t:'')+'">'+(a&&a.ot&&mode==='emp'?'<span class="ot">+'+a.ot+'h</span>':'')+i+(dotc?'<i style="background:'+dotc+'"></i>':'')+'</button>'}
+  h+='</div><div class="legend">'+Object.values(ST).map(x=>'<span><i style="background:'+x.c+'"></i>'+(mode==='wor'?x.w:x.t)+'</span>').join('')+'</div>';
+  h+='<div class="counts">'+['P','A','L','V'].map(k=>'<div><b>'+f.c[k]+'</b><span>'+(mode==='wor'?ST[k].w:ST[k].t)+'</span></div>').join('')+(mode==='emp'?'<div><b>'+f.ot+'</b><span>Horas extra</span></div>':'')+'</div></div>';
+  return h;
+}
+
+/* ---------- alertas ---------- */
+function alerts(){
+  const a=[],d=T.getDate(),pm=mkShift(MK,-1);
+  const un=S.msgs.filter(m=>m.from==='w'&&!m.read);
+  if(un.length)a.push({id:'msg',c:'var(--blue)',t:un.length+' mensaje'+(un.length>1?'s':'')+' sin leer',d:un.map(m=>first(W(m.wid))+': “'+esc(m.text)+'”').slice(0,2).join('<br>'),btn:'Ver mensajes',act:'tab',v:'msgs',fixed:true});
+  for(const w of active()){
+    if(d<=13&&!S.docs.some(x=>x.wid===w.id&&x.cat==='Comprobante Previred'&&x.month===pm))a.push({id:'prev_'+w.id+pm,c:'var(--blue)',t:'Cotizaciones de '+first(w)+' ('+mkLabel(pm)+')',d:'Aún no subes el comprobante de Previred. El plazo es hasta el día 13.',btn:'Subir comprobante',act:'goto',v:w.id+'|docs'});
+    if(w.w.contract==='Plazo fijo'&&w.w.endDate){const left=Math.round((dOf(w.w.endDate)-T)/864e5);if(left<=30)a.push({id:'pf_'+w.id+w.w.endDate,c:'var(--l)',t:'Contrato de '+first(w)+(left<0?' venció hace '+(-left)+' días':left===0?' vence hoy':' vence en '+left+' días'),d:'Termina el '+fmtD(w.w.endDate)+'. Decide si renuevas o preparas el finiquito.',btn:'Ver finiquito',act:'goto',v:w.id+'|fin'})}
+
+  }
+  if(S.mode==='cloud'&&!S.emp.homeSet)a.unshift({id:'home',c:'var(--blue)',t:'Marca la ubicación de tu casa',d:'Hazlo estando en tu casa. Así la app sabe si las llegadas son en el lugar correcto.',btn:'Usar mi ubicación actual',act:'hereloc',v:'',fixed:true});
+  const owed=active().map(w=>[w,globalBal(w)]).filter(x=>x[1]>0);
+  if(owed.length===1){const[w,b]=owed[0];a.push({id:'bal_'+w.id+'_'+b,c:'var(--p)',t:'Por pagar a '+first(w)+': '+clp(b),d:'Sueldo acumulado pendiente ('+w.w.freq.toLowerCase()+').',btn:'Ir a pagos',act:'goto',v:w.id+'|pagos'})}
+  else if(owed.length>1){const tot=owed.reduce((x,y)=>x+y[1],0);a.push({id:'bal_all_'+tot,c:'var(--p)',t:'Sueldos por pagar: '+clp(tot),d:owed.map(x=>first(x[0])+' '+clp(x[1])).join(' · '),btn:'Ver equipo',act:'tab',v:'team'})}
+  const unc=S.pays.filter(p=>!p.recv&&p.type!=='Descuento'&&W(p.wid)&&W(p.wid).status==='activo');
+  if(unc.length)a.push({id:'unc_'+unc.length,c:'var(--l)',t:unc.length+' pago'+(unc.length>1?'s':'')+' sin confirmar',d:unc.map(p=>first(W(p.wid))+' '+clp(p.amount)).join(' · ')+'. La trabajadora debe tocar «Sí, lo recibí» en su app.',btn:'Ver pagos',act:'goto',v:unc[0].wid+'|pagos'});
+  return a.filter(x=>x.fixed||!S.dismissed.includes(x.id));
+}
+
+/* ---------- vistas empleador ---------- */
+function liveCard(w){
+  const c=S.ck[w.id][TODAY],a=S.att[w.id][TODAY],k=c.in.st||'ok',wm=workedMin(c);
+  const lk={ok:c.out?'Ya se fue':'Llegó a trabajar',pend:'Llegada fuera de la casa',acc:'Excepción aceptada',rej:'Llegada rechazada'}[k];
+  let act='';
+  if(k==='ok')act=a?'<div class="note">'+svg('ok',18)+'Registrado como '+ST[a.s].t.toLowerCase()+'</div>':'<button class="btn pri full" style="margin-top:12px" data-a="validate" data-v="'+w.id+'">Confirmar presente</button>';
+  if(k==='pend')act='<div class="ask">¿Aceptas esta llegada aunque no esté en la casa?</div><div class="seg"><button class="btn on-p" data-a="accept" data-v="'+w.id+'">Aceptar</button><button class="btn on-a" data-a="reject" data-v="'+w.id+'">Rechazar</button></div>';
+  if(k==='acc')act='<div class="note">'+svg('ok',18)+'Aceptado a las '+c.in.dec+' · quedó presente</div>';
+  if(k==='rej')act='<div class="note">Rechazado a las '+c.in.dec+' · '+(c.in.out==='A'?'marcado ausente':'se le pidió marcar de nuevo')+(c.in.note?' · “'+esc(c.in.note)+'”':'')+'</div>';
+  let extra='';
+  if(c.out){const over=tmin(c.out.t)-tmin(w.w.end);if(over>=30&&!(a&&a.ot))extra='<div class="why">Salió '+dur(over)+' después de su horario ('+w.w.end+'). ¿Lo cuentas como horas extra?<div class="seg"><button class="btn sm" data-a="addot" data-v="'+w.id+'|'+Math.round(over/30)/2+'">Sumar '+(Math.round(over/30)/2)+' h extra</button><button class="btn sm" data-a="dayx" data-v="'+w.id+'|'+TODAY+'">Ver día</button></div></div>'}
+  return '<div class="live '+(k==='ok'||k==='acc'?'ok':k==='pend'?'warn':'bad')+'"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="lk">'+lk+'</div><div class="name">'+esc(first(w))+(c.in.extra?' · día extra':'')+'</div></div><div class="time">'+c.in.t+'</div></div>'+
+    '<div class="inout"><div><span>Llegada</span><b>'+c.in.t+'</b></div><div><span>Salida</span><b>'+(c.out?c.out.t:'—')+'</b></div><div><span>Trabajado</span><b>'+(wm!==null?dur(wm):'en curso')+'</b></div></div>'+
+    ckBlock(c.in,true)+(c.in.reason?'<div class="why">Motivo: “'+esc(c.in.reason)+'”</div>':'')+act+extra+'</div>';
+}
+function crewCard(cap){const ms=crewOf(cap.id);if(!ms.length)return'';const arrived=ms.filter(m=>S.ck[m.id][TODAY]&&S.ck[m.id][TODAY].in).length;
+  return '<div class="card"><div class="row"><span>'+svg('crew',28)+'</span><div class="grow"><div class="name">Cuadrilla de '+esc(first(cap))+'</div><div class="sub">'+arrived+' de '+ms.length+' llegaron hoy</div></div></div>'+ms.map(m=>{const c=S.ck[m.id][TODAY],a=S.att[m.id][TODAY];const stt=a&&a.s==='A'?'<span style="color:var(--a);font-weight:700">No vino</span>':c&&c.in?'Llegó '+c.in.t+(c.out?' · salió '+c.out.t:'')+(c.in.by?' · marcó '+esc(first(W(c.in.by))):'')+(c.in.st==='pend'?' · <b style="color:var(--l)">por revisar</b>':''):'Sin marcar';return '<div class="crewrow"><div class="grow"><div class="name" style="font-size:15px">'+esc(m.p.name)+'</div><div class="sub">'+stt+'</div></div><button class="ib" data-a="dayx" data-v="'+m.id+'|'+TODAY+'" aria-label="Ver el día de '+esc(first(m))+'">'+svg('r')+'</button></div>'}).join('')+'</div>'}
+function vEmpHome(){
+  const solo=active().filter(w=>w.role!=='miembro'),sched=solo.filter(w=>works(w,TODAY)),nm=new Date().getHours()*60+new Date().getMinutes();
+  let h=top('Hola, '+esc(S.emp.name.split(' ')[0]),sched.length?'Hoy trabajan '+sched.length+' de '+solo.length+(solo.length===1?' persona':' personas')+(capList().length?' (más las cuadrillas)':'')+'.':'Hoy nadie tiene turno.');
+  const live=solo.filter(w=>S.ck[w.id][TODAY]&&S.ck[w.id][TODAY].in).sort((a,b)=>(S.ck[b.id][TODAY].in.st==='pend')-(S.ck[a.id][TODAY].in.st==='pend'));
+  h+=live.map(w=>liveCard(w)+(w.role==='capataz'?crewCard(w):'')).join('');
+  h+=capList().filter(c=>!live.includes(c)).map(crewCard).join('');
+  const crewPend=active().filter(w=>w.role==='miembro'&&S.ck[w.id][TODAY]&&S.ck[w.id][TODAY].in&&S.ck[w.id][TODAY].in.st==='pend');
+  h+=crewPend.map(liveCard).join('');
+  const wait=sched.filter(w=>!S.ck[w.id][TODAY]&&!S.att[w.id][TODAY]);
+  if(wait.length)h+='<div class="card row"><span class="dot" style="background:var(--l);margin:0"></span><div class="grow"><div class="name">Esperando llegada</div><div class="sub">'+wait.map(w=>{const late=nm-tmin(w.w.start);return esc(first(w))+(late>15?' <b style="color:var(--a)">(atrasado/a '+dur(late)+')</b>':' (entra '+w.w.start+')')}).join(', ')+'</div></div></div>';
+  h+='<h2>Asistencia de hoy</h2>'+solo.map(w=>{const a=S.att[w.id][TODAY],on=works(w,TODAY);
+    return '<div class="card"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+'</div><div class="sub">'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':'')+(on?' · '+w.w.start+' a '+w.w.end:' · hoy no le toca')+'</div></div><button class="ib" data-a="dayx" data-v="'+w.id+'|'+TODAY+'" aria-label="Detalle del día">'+svg('r')+'</button></div>'+
+    '<div class="seg"><button class="btn'+(a&&a.s==='P'?' on-p':'')+'" data-a="mark" data-v="'+w.id+'|P">Presente</button><button class="btn'+(a&&a.s==='A'?' on-a':'')+'" data-a="mark" data-v="'+w.id+'|A">Ausente</button></div></div>'}).join('');
+  const al=alerts();
+  h+='<h2>Avisos'+(al.length?' ('+al.length+')':'')+'</h2>'+(al.length?al.map(x=>'<div class="alert"><span class="dot" style="background:'+x.c+'"></span><div class="grow"><div class="name">'+x.t+'</div><div class="sub">'+x.d+'</div><button class="btn sm" style="margin-top:8px" data-a="'+x.act+'" data-v="'+x.v+'">'+x.btn+'</button></div>'+(x.fixed?'':'<button class="x" data-a="dismiss" data-v="'+x.id+'" aria-label="Descartar aviso">×</button>')+'</div>').join(''):'<div class="card empty">Todo al día.</div>');
+  const tot=active().reduce((s,w)=>s+Math.max(0,globalBal(w)),0);
+  h+='<h2>Este mes</h2><div class="card"><div class="sub">Total por pagar (estimado)</div><div class="big">'+clp(tot)+'</div>'+active().map(w=>'<div class="row" style="margin-top:10px"><div class="grow sub">'+esc(first(w))+(w.role==='miembro'?' · cuadrilla':'')+'</div><b>'+clp(globalBal(w))+'</b></div>').join('')+'</div>';
+  return h;
+}
+const invState=w=>w.invite&&w.invite.used?'<span class="tag" style="color:var(--p)">Con app</span>':w.invite&&w.invite.token?'<span class="tag">Invitación enviada</span>':'<span class="tag">Sin invitar</span>';
+function vEmpTeam(){
+  const all=S.workers.filter(w=>w.status===S.eqTab),list=S.eqTab==='activo'?all.filter(w=>w.role!=='miembro'||!W(w.crew)||W(w.crew).status!=='activo'):all,na=active().length,nf=S.workers.length-na;
+  let h=top('Equipo',na+' activo'+(na===1?'':'s')+(nf?' · '+nf+' finiquitado'+(nf===1?'':'s'):''));
+  h+='<div class="seg" style="margin:0 0 14px"><button class="btn'+(S.eqTab==='activo'?' dark':'')+'" data-a="eq" data-v="activo">Activos ('+na+')</button><button class="btn'+(S.eqTab==='finiquitado'?' dark':'')+'" data-a="eq" data-v="finiquitado">Finiquitados ('+nf+')</button></div>';
+  h+=list.length?list.map(w=>{const ms=w.role==='capataz'?crewOf(w.id):[];
+    return '<div class="card"><button style="display:block;width:100%;text-align:left;border:0;background:none;padding:0;cursor:pointer;color:inherit" data-a="open" data-v="'+w.id+'"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+'</div><div class="sub">'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':'')+' · '+w.w.modality+' '+clp(w.w.rate)+'</div><div class="sub">'+w.w.days.map(d=>DAB[d]).join(', ')+' · '+w.w.start+' a '+w.w.end+'</div><div style="margin-top:4px">'+invState(w).replace('margin-left:4px','')+'</div></div>'+svg('r')+'</div></button>'+
+    (ms.length?'<div style="margin-top:10px"><div class="sub" style="font-weight:700">Cuadrilla ('+ms.length+')</div>'+ms.map(m=>'<button class="crewrow" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;text-align:left;cursor:pointer;color:inherit;font:inherit" data-a="open" data-v="'+m.id+'"><div class="grow"><div class="name" style="font-size:15px">'+esc(m.p.name)+'</div><div class="sub">'+m.w.modality+' '+clp(m.w.rate)+' · saldo '+clp(globalBal(m))+'</div></div>'+svg('r')+'</button>').join('')+'</div>':'')+
+    (w.status==='activo'?'<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"><span class="grow sub">Saldo pendiente</span><b>'+clp(globalBal(w))+'</b></div>':'<div class="sub" style="margin-top:8px">Finiquito el '+fmtD(w.term.date)+'</div>')+'</div>'}).join(''):'<div class="card empty">No hay personas en esta lista.</div>';
+  if(S.eqTab==='activo')h+='<button class="btn pri full" data-a="wform" data-v="">Agregar trabajador</button>';
+  return h;
+}
+function vEmpMsgs(){
+  let h=top('Mensajes','Conversaciones con tu equipo.');
+  h+=S.workers.map(w=>{const ms=S.msgs.filter(m=>m.wid===w.id),last=ms[ms.length-1],un=ms.filter(m=>m.from==='w'&&!m.read).length;
+    return '<button class="card" style="display:block;width:100%;text-align:left;border:0;cursor:pointer" data-a="thread" data-v="'+w.id+'"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+(un?' <span class="tag" style="background:var(--a);color:#fff;box-shadow:none">'+un+' nuevo'+(un>1?'s':'')+'</span>':'')+'</div><div class="sub">'+(last?(last.from==='e'?'Tú: ':'')+esc(last.text):'Sin mensajes todavía')+'</div></div>'+svg('r')+'</div></button>'}).join('');
+  return h;
+}
+function vEmpSettings(){
+  const e=S.emp,nOK=('Notification' in window)&&Notification.permission==='granted'&&S.notifyOn;
+  let h=top('Ajustes','Tus datos, avisos y seguridad.');
+  h+='<h2>Guía de uso</h2><div class="card row"><span>'+svg('help',28)+'</span><div class="grow"><div class="name">¿Cómo funciona Jornada?</div><div class="sub">Repasa la guía paso a paso.</div></div><button class="btn sm" data-a="tourE">Ver guía</button></div>';
+  h+='<h2>Tus datos de empleador</h2><div class="card lines">'+[['Nombre',e.name],['RUT',e.rut],['Domicilio',empAddr()],['Correo',e.email],['Teléfono',e.phone]].map(l=>'<div><span>'+l[0]+'</span><b style="white-space:normal">'+esc(l[1]||'—')+'</b></div>').join('')+'</div><button class="btn full" data-a="empform">Editar mis datos</button>';
+  h+='<h2>Marcaje de llegada</h2><div class="card"><div class="sub">El lugar de trabajo se define en la ficha de cada persona (puntos o áreas en el mapa). Este radio se usa para los puntos nuevos.</div><label for="rad">Radio por defecto</label><select id="rad" data-c="radius">'+[50,100,150,200,300,500].map(r=>'<option value="'+r+'"'+(r===e.radius?' selected':'')+'>'+r+' metros</option>').join('')+'</select><button class="btn full" style="margin-top:10px" data-a="hereloc">Usar mi ubicación actual como mi casa</button>'+
+    '<button class="switch" data-a="strict" role="switch" aria-checked="'+S.strict+'"><span><b>Exigir estar en el lugar para marcar</b><br>'+(S.strict?'Fuera del lugar no pueden marcar: solo pedir una excepción con motivo.':'Pueden marcar desde cualquier lugar y tú aceptas o rechazas.')+'</span><i></i></button></div>';
+  h+='<h2>Notificaciones</h2><div class="card"><div class="row"><span>'+svg('bell',26)+'</span><div class="grow"><div class="name">'+(nOK?'Activadas en este teléfono':'Desactivadas')+'</div><div class="sub">Avisos de llegadas, atrasos, pagos confirmados y mensajes.</div></div></div>'+(nOK?'':'<button class="btn full" style="margin-top:10px" data-a="notifon">Activar notificaciones</button>')+'<p class="note">Entre teléfonos distintos los avisos llegan cuando la app esté conectada a la nube.</p></div>';
+  h+='<h2>Seguridad</h2><div class="card"><div class="row"><span>'+svg('lock')+'</span><div class="grow"><div class="name">PIN de 4 dígitos</div><div class="sub">'+(S.pin?'Activado: se pide al abrir la app.':'Desactivado.')+'</div></div></div><div class="'+(S.pin?'seg':'opts')+'">'+(S.pin?'<button class="btn" data-a="pinset">Cambiar PIN</button><button class="btn" data-a="pinoff">Quitar PIN</button>':'<button class="btn" data-a="pinset">Activar PIN</button>')+'</div></div>';
+  h+='<h2>Respaldo</h2><div class="card"><div class="sub">Guarda una copia de todos los datos'+(S.lastBackup?' · último respaldo: '+fmtD(S.lastBackup):'')+'.</div><button class="btn pri full" style="margin-top:12px" data-a="backupdl">Descargar respaldo</button><div class="seg"><button class="btn" data-a="backup">Copiar respaldo</button><button class="btn" data-a="restore">Restaurar</button></div></div>';
+  if(S.mode==='cloud'){const q=Object.keys(sync.queue).length;
+    h+='<h2>Tu cuenta</h2><div class="card"><div class="name">'+esc(me&&me.email||S.emp.email||'Cuenta de empleador')+'</div><div class="sub">'+(sync.err?'<span style="color:var(--a)">No se pudo sincronizar: '+esc(sync.err)+'</span>':q?q+' cambio'+(q>1?'s':'')+' por enviar':'Todo guardado en la nube')+(sync.lastPull?' · revisado '+new Date(sync.lastPull).toTimeString().slice(0,5):'')+'</div><div class="seg"><button class="btn" data-a="syncnow">Sincronizar</button><button class="btn" data-a="out">Cerrar sesión</button></div></div>';
+    h+='<h2>Datos de prueba</h2><div class="card"><div class="sub">Para probar la app con ejemplos (casa, jardinera y una cuadrilla). Después puedes borrarlos.</div><div class="seg"><button class="btn" data-a="loaddemo">Cargar ejemplos</button><button class="btn" data-a="wipe">Borrar todo</button></div></div>';}
+  else h+='<h2>Modo de prueba</h2><div class="card"><div class="sub">Estás usando datos de ejemplo guardados solo en este teléfono. Para probar la vista de un trabajador: Equipo → la persona → Ficha → «Invitar a la app» → «Probar en este teléfono».</div><div class="opts"><button class="btn full" data-a="reset">Reiniciar datos de ejemplo</button><button class="btn full" data-a="out">Salir del modo de prueba</button></div></div>';
+  return h;
+}
+
+/* ---------- detalle de trabajador (empleador) ---------- */
+function vDetail(){
+  const w=W(S.detail);if(!w){S.detail=null;return vEmpTeam()}
+  const subs=[['asis','Asistencia'],['pagos','Pagos'],['rep','Reportes'],['docs','Documentos'],['fin','Finiquito'],['ficha','Ficha']];
+  let h=top(esc(w.p.name),esc(w.w.labor)+' · '+w.w.modality+' '+clp(w.w.rate)+(w.status==='finiquitado'?' · finiquitado':''),'closedetail');
+  h+='<div class="subtabs">'+subs.map(s=>'<button class="'+(S.sub===s[0]?'on':'')+'" data-a="sub" data-v="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
+  const f=fin(w,S.mk);
+  if(S.sub==='asis'){h+=calendar(w,'emp')+'<p class="note">Toca un día para ver llegada y salida, marcar asistencia, horas extra o notas. Los cambios a días pasados quedan registrados.</p>'}
+  if(S.sub==='pagos'){
+    h+='<div class="mhead"><button class="ib" data-a="mk" data-v="-1" aria-label="Mes anterior">'+svg('l')+'</button><b>'+mkLabel(S.mk)+'</b><button class="ib" data-a="mk" data-v="1" aria-label="Mes siguiente">'+svg('r')+'</button></div>';
+    h+='<div class="card"><div class="sub">Saldo del mes</div><div class="big">'+clp(f.bal)+'</div><div class="lines" style="margin-top:12px">'+finLines(w,f).map(l=>'<div><span>'+l[0]+'</span><b>'+l[1]+'</b></div>').join('')+'</div><div class="row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="grow sub">Saldo total acumulado</span><b>'+clp(globalBal(w))+'</b></div><p class="note">Horas extra con recargo de 50% sobre jornada de 42 h. No incluye cotizaciones.</p></div>';
+    if(w.status==='activo')h+='<div class="seg3" style="margin-top:0"><button class="btn pri sm" data-a="payform" data-v="Pago de sueldo">Pagar sueldo</button><button class="btn sm" data-a="payform" data-v="Anticipo">Anticipo</button><button class="btn sm" data-a="payform" data-v="Descuento">Descuento</button></div>';
+    const l=S.pays.filter(p=>p.wid===w.id).sort((a,b)=>b.date.localeCompare(a.date));
+    h+='<h2>Historial ('+l.length+')</h2><div class="card">'+(l.length?l.map(p=>'<div class="hist"><div class="row"><div class="grow"><div class="name">'+p.type+' <span class="tag">'+p.method+'</span></div><div class="sub">'+fmtD(p.date)+' · '+esc(p.note||'Sin nota')+'</div>'+(p.type==='Descuento'?'':p.recv?'<div class="sub" style="color:var(--p);font-weight:700">'+svg('ok',14)+' '+esc(first(w))+' confirmó que lo recibió ('+fmtD(p.recv.date)+')</div>':'<div class="sub" style="color:#b45309;font-weight:700">Esperando que '+esc(first(w))+' confirme</div>')+'</div><div class="amt">'+(p.type==='Pago de sueldo'?'':'−')+clp(p.amount)+'</div></div><div class="links">'+(p.receipt?'<button class="btn sm" data-a="viewrec" data-v="'+p.id+'">Ver comprobante</button>':'<button class="btn sm" data-a="addrec" data-v="'+p.id+'">Adjuntar comprobante</button>')+'<a class="btn sm" href="'+wa(w.p.phone,'Hola '+first(w)+', te registré un '+p.type.toLowerCase()+' de '+clp(p.amount)+' el '+fmtD(p.date)+' ('+p.method.toLowerCase()+').')+'" target="_blank" rel="noopener">Avisar por WhatsApp</a><button class="btn sm" data-a="delpay" data-v="'+p.id+'">Borrar</button></div></div>').join(''):'<div class="empty">Aún no hay movimientos.</div>')+'</div>';
+  }
+  if(S.sub==='rep'){
+    const audited=Object.entries(S.att[w.id]).filter(([k,a])=>k.startsWith(S.mk)&&(a.edited||a.extra)).sort(),cks=Object.entries(S.ck[w.id]).filter(([k])=>k.startsWith(S.mk)).map(([,c])=>c);
+    const inH=cks.filter(c=>c.in&&inside(c.in)).length,outH=cks.filter(c=>c.in&&!inside(c.in)).length,mins=cks.map(workedMin).filter(x=>x!==null),avg=mins.length?mins.reduce((a,b)=>a+b,0)/mins.length:0,v=vac(w);
+    h+='<div class="mhead"><button class="ib" data-a="mk" data-v="-1" aria-label="Mes anterior">'+svg('l')+'</button><b>'+mkLabel(S.mk)+'</b><button class="ib" data-a="mk" data-v="1" aria-label="Mes siguiente">'+svg('r')+'</button></div>';
+    h+='<div class="card"><div class="counts" style="margin:0">'+Object.entries(ST).map(([k,x])=>'<div><b>'+f.c[k]+'</b><span>'+x.t+'</span></div>').join('')+'</div><div class="lines" style="margin-top:12px"><div><span>Horas extra</span><b>'+f.ot+' h ('+clp(f.otPay)+')</b></div><div><span>Total ganado</span><b>'+clp(f.gross)+'</b></div><div><span>Saldo del mes</span><b>'+clp(f.bal)+'</b></div></div></div>';
+    h+='<div class="card lines"><div><span>Llegadas en la casa</span><b>'+inH+'</b></div><div><span>Llegadas fuera de la casa</span><b>'+outH+'</b></div><div><span>Promedio trabajado por día</span><b>'+(avg?dur(avg):'—')+'</b></div><div><span>Vacaciones disponibles</span><b>'+String(v.avail).replace('.',',')+' días</b></div></div>';
+    h+='<h2>Cambios registrados ('+audited.length+')</h2><div class="card">'+(audited.length?audited.map(([k,a])=>'<div class="hist"><div class="name">'+fmtD(k)+' · '+ST[a.s].t+'</div><div class="sub">'+(a.edited?'Editado el '+fmtS(a.edited):'')+(a.extra?' · día fuera de jornada':'')+(a.note?' · '+esc(a.note):'')+'</div></div>').join(''):'<div class="empty">Sin cambios a días pasados este mes.</div>')+'</div>';
+    const txt=reportText(w,f);
+    h+='<button class="btn pri full" data-a="pdf" data-v="rep">Descargar reporte en PDF</button><div class="seg"><a class="btn" href="'+wa(w.p.phone,txt)+'" target="_blank" rel="noopener">Enviar por WhatsApp</a><button class="btn" data-a="copy" data-v="rep">Copiar resumen</button></div>';
+  }
+  if(S.sub==='docs'){
+    const miss=missing(w);
+    h+='<div class="card"><div class="name">Contrato de trabajo</div><div class="sub">Borrador según Art. 10 y 146 del Código del Trabajo · '+esc(w.w.labor)+' ('+esc(w.w.mode)+').</div>'+(miss.length?'<div class="why" style="color:var(--a)">Faltan datos: '+miss.join(', ')+'.</div><button class="btn full" style="margin-top:10px" data-a="'+(miss.some(x=>x.startsWith('Empleador'))?'empform':'wform')+'" data-v="'+w.id+'">Completar datos</button>':'')+'<pre>'+esc(contractText(w))+'</pre><button class="btn pri full" style="margin-top:12px" data-a="pdf" data-v="contract">Descargar contrato en PDF</button><div class="seg"><button class="btn" data-a="copy" data-v="contract">Copiar texto</button><a class="btn" href="'+wa(w.p.phone,'Hola '+first(w)+', te comparto el borrador de tu contrato:\n\n'+contractText(w))+'" target="_blank" rel="noopener">WhatsApp</a></div></div>';
+    h+='<h2>Bóveda de documentos</h2><div class="card"><form id="fd"><label for="dc">Tipo</label><select id="dc">'+opt(DOCCAT,'Comprobante Previred')+'</select><div class="two"><div><label for="dm">Mes</label><input id="dm" type="month" value="'+mkShift(MK,-1)+'"></div><div><label for="dn">Nota</label><input id="dn" placeholder="Opcional"></div></div><label for="df">Archivo (foto o PDF)</label><input id="df" type="file" accept="image/*,application/pdf"><button class="btn pri full" style="margin-top:12px" type="submit">Guardar en la bóveda</button></form></div>';
+    const ds=S.docs.filter(x=>x.wid===w.id).sort((a,b)=>b.month.localeCompare(a.month));
+    h+='<div class="card">'+(ds.length?ds.map(x=>'<div class="hist"><div class="row"><div class="grow"><div class="name">'+esc(x.cat)+'</div><div class="sub">'+esc(x.name)+' · '+mkLabel(x.month)+(x.note?' · '+esc(x.note):'')+'</div></div></div><div class="links">'+(x.data&&x.data.startsWith('data:image')?'<button class="btn sm" data-a="viewdoc" data-v="'+x.id+'">Ver</button>':'')+'<button class="btn sm" data-a="dldoc" data-v="'+x.id+'">Descargar</button><button class="btn sm" data-a="deldoc" data-v="'+x.id+'">Borrar</button></div></div>').join(''):'<div class="empty">Sin documentos.</div>')+'</div>';
+  }
+  if(S.sub==='fin'){
+    if(w.status==='finiquitado'&&w.term){const t=w.term;h+='<div class="card"><div class="name">Relación laboral terminada</div><div class="sub">'+fmtL(t.date)+' · '+CAUSAL.find(c=>c[0]===t.causal)[1]+'</div><div class="big" style="margin-top:8px">'+clp(t.total)+'</div><div class="sub">Total líquido del finiquito</div><pre>'+esc(finiquitoText(w,t))+'</pre><button class="btn pri full" style="margin-top:12px" data-a="pdf" data-v="fin">Descargar finiquito en PDF</button><div class="seg"><button class="btn" data-a="copy" data-v="fin">Copiar texto</button><a class="btn" href="'+wa(w.p.phone,finiquitoText(w,t))+'" target="_blank" rel="noopener">WhatsApp</a></div><button class="btn full" style="margin-top:8px" data-a="reactivate" data-v="'+w.id+'">Reactivar trabajador</button></div>'}
+    else{
+      const v=vac(w,finDraft.date||TODAY),pend=Math.max(0,globalBal(w));
+      const d=Object.assign({date:w.w.contract==='Plazo fijo'&&w.w.endDate?w.w.endDate:TODAY,causal:w.w.contract==='Plazo fijo'?'159-4':'159-1',pending:pend,vacDays:v.avail,vacPay:Math.round(v.avail*dailyRef(w)),indemnity:0,discounts:0,notes:''},finDraft.wid===w.id?finDraft:{});
+      d.total=Math.round(+d.pending+ +d.vacPay+ +d.indemnity- +d.discounts);
+      h+='<div class="card"><div class="name">Asistente de finiquito</div><div class="sub">Calcula el borrador y cierra la relación laboral.</div><form id="ff"><div class="two"><div><label for="fdt">Fecha de término</label><input id="fdt" type="date" value="'+d.date+'"></div><div><label for="fvd">Vacaciones (días)</label><input id="fvd" inputmode="decimal" value="'+String(d.vacDays).replace('.',',')+'"></div></div><label for="fc">Causal legal</label><select id="fc">'+CAUSAL.map(c=>'<option value="'+c[0]+'"'+(c[0]===d.causal?' selected':'')+'>'+c[1]+'</option>').join('')+'</select>'+
+        '<label for="fp">Sueldo pendiente</label><input id="fp" inputmode="numeric" value="'+clp(d.pending)+'"><label for="fv">Vacaciones proporcionales ('+clp(dailyRef(w))+' por día)</label><input id="fv" inputmode="numeric" value="'+clp(d.vacPay)+'"><label for="fi">Indemnización u otros haberes</label><input id="fi" inputmode="numeric" value="'+clp(d.indemnity)+'"><label for="fx2">Descuentos o anticipos pendientes</label><input id="fx2" inputmode="numeric" value="'+clp(d.discounts)+'"><label for="fn">Observaciones</label><input id="fn" value="'+esc(d.notes)+'">'+
+        '<div class="lines" style="margin-top:14px"><div class="tot"><span>Total líquido</span><b id="ftot">'+clp(d.total)+'</b></div></div><p class="note">En trabajadoras de casa particular la indemnización a todo evento se financia con el aporte mensual del empleador en la AFP; revisa tu caso con la Dirección del Trabajo. Para que sea válido, el finiquito se ratifica ante notario, la Inspección del Trabajo o en Mi DT.</p>'+
+        '<button class="btn on-a full" style="margin-top:12px" type="submit">Cerrar relación laboral</button></form></div>';
+    }
+  }
+  if(S.sub==='ficha'){
+    const p=w.p,x=w.w;
+    const grp=(t,rows)=>'<h2>'+t+'</h2><div class="card lines">'+rows.map(r=>'<div><span>'+r[0]+'</span><b style="white-space:normal">'+esc(r[1]||'—')+'</b></div>').join('')+'</div>';
+    h+=grp('Datos personales',[['RUT',p.rut],['Nacionalidad',p.nat],['Nacimiento',fmtS(p.birth)],['Estado civil',p.marital],['Domicilio',[p.address,p.comuna].filter(Boolean).join(', ')],['Teléfono',p.phone],['Correo',p.email]]);
+    h+=grp('Trabajo',[['Labor',x.labor],['Modalidad',x.mode],['Funciones',x.functions],['Días',x.days.map(d=>DAB[d]).join(', ')],['Horario',x.start+' a '+x.end+' · colación '+x.lunch+' min'],['Ingreso',fmtS(x.startDate)],['Contrato',x.contract+(x.contract==='Plazo fijo'?' hasta '+fmtS(x.endDate):'')]]);
+    h+=grp('Sueldo',[['Forma de pago',x.modality+' · '+clp(x.rate)],['Frecuencia',x.freq],['Movilización',clp(x.transport)],['Colación',clp(x.meal)],['Valor hora extra',clp(otRate(w))]]);
+    h+=grp('Previsión y banco',[['AFP',w.prev.afp],['Salud',w.prev.salud],['Banco',w.bank.name+' · '+w.bank.type],['N° de cuenta',w.bank.number]]);
+    h+='<h2>Lugar de trabajo</h2><div class="card">'+placesOf(w).map(pl=>'<div class="row" style="padding:6px 0"><span>'+svg(pl.type==='area'?'flag':'pin')+'</span><div class="grow"><div class="name">'+esc(pl.name)+'</div><div class="sub">'+(pl.type==='area'?'Área de '+areaHa(pl):'Punto · radio '+pl.radius+' m')+'</div></div></div>').join('')+'<button class="btn full" style="margin-top:10px" data-a="places" data-v="'+w.id+'">Editar en el mapa</button></div>';
+    h+='<h2>Rol</h2><div class="card lines"><div><span>Tipo</span><b>'+({individual:'Trabajador/a individual',capataz:'Capataz de cuadrilla',miembro:'Miembro de cuadrilla'}[w.role||'individual'])+'</b></div>'+(w.role==='miembro'&&W(w.crew)?'<div><span>Capataz</span><b>'+esc(W(w.crew).p.name)+'</b></div>':'')+(w.role==='capataz'?'<div><span>Cuadrilla</span><b>'+crewOf(w.id).length+' personas</b></div>':'')+'<div><span>App</span><b>'+(w.invite&&w.invite.used?'Activada el '+fmtD(w.invite.used):w.invite&&w.invite.token?'Invitación enviada':'Sin invitar')+'</b></div></div>';
+    h+='<div class="opts"><button class="btn pri full" data-a="wform" data-v="'+w.id+'">Editar ficha</button><button class="btn full" data-a="invite" data-v="'+w.id+'">Invitar a la app</button><button class="btn full" data-a="delw" data-v="'+w.id+'">Eliminar trabajador</button></div>';
+  }
+  return h;
+}
+let finDraft={};
+function finLines(w,f){const l=[];if(w.w.modality==='Mensual'){l.push(['Sueldo base',clp(f.base)]);if(f.absent)l.push(['Descuento '+f.c.A+' ausencia'+(f.c.A===1?'':'s'),'−'+clp(f.absent)])}else l.push([f.c.P+' día'+(f.c.P===1?'':'s')+' trabajado'+(f.c.P===1?'':'s'),clp(f.base)]);if(f.ot)l.push(['Horas extra ('+f.ot+' h)','+'+clp(f.otPay)]);if(f.allow)l.push(['Movilización y colación','+'+clp(f.allow)]);l.push(['Pagos de sueldo','−'+clp(f.paid)],['Anticipos','−'+clp(f.adv)]);if(f.disc)l.push(['Descuentos','−'+clp(f.disc)]);return l}
+function reportText(w,f){return 'Resumen de '+mkLabel(S.mk)+' · '+w.p.name+'\n'+Object.entries(ST).map(([k,x])=>x.t+': '+f.c[k]).join(' · ')+'\nHoras extra: '+f.ot+' h ('+clp(f.otPay)+')\nTotal ganado: '+clp(f.gross)+'\nPagado y anticipos: '+clp(f.paid+f.adv+f.disc)+'\nSaldo del mes: '+clp(f.bal)}
+function missing(w){const e=S.emp,p=w.p,x=w.w,m=[];[['name','nombre'],['rut','RUT'],['address','domicilio'],['comuna','comuna'],['email','correo']].forEach(([k,l])=>{if(!String(e[k]||'').trim())m.push('Empleador: '+l)});[['name','nombre'],['rut','RUT'],['birth','fecha de nacimiento'],['address','domicilio'],['email','correo']].forEach(([k,l])=>{if(!String(p[k]||'').trim())m.push(l)});if(x.contract==='Plazo fijo'&&!x.endDate)m.push('fecha de término');return m}
+function contractText(w){
+  const e=S.emp,p=w.p,x=w.w,casa=['Labor doméstica','Baby sitting','Cuidado de personas'].includes(x.labor),city=(e.city||'Santiago').split(',')[0];
+  const al=(+x.transport||+x.meal)?'\nAdemás pagará asignaciones no imponibles (Art. 41 inc. 2°):'+(+x.transport?'\n  • Movilización: '+clp(x.transport)+' mensuales.':'')+(+x.meal?'\n  • Colación: '+clp(x.meal)+' mensuales.':''):'';
+  return [(casa?'CONTRATO DE TRABAJO DE TRABAJADOR/A DE CASA PARTICULAR':'CONTRATO DE TRABAJO'),'(Art. 10 y Art. 146 y siguientes del Código del Trabajo)','',
+  'En '+city+', a '+fmtL(TODAY)+', entre:','',
+  '1. EL EMPLEADOR: '+(e.name||'____')+', RUT '+(e.rut||'____')+', nacionalidad '+(e.nat||'____')+', estado civil '+(e.marital||'____')+', profesión '+(e.prof||'____')+', con domicilio en '+(empAddr()||'____')+', correo '+(e.email||'____')+'.','',
+  '2. EL/LA TRABAJADOR/A: '+(p.name||'____')+', RUT '+(p.rut||'____')+', nacionalidad '+(p.nat||'____')+', nacido/a el '+(p.birth?fmtL(p.birth):'____')+', estado civil '+(p.marital||'____')+', con domicilio en '+([p.address,p.comuna].filter(Boolean).join(', ')||'____')+', correo '+(p.email||'____')+'.','',
+  'PRIMERO (Servicios): prestará servicios de "'+x.labor+'": '+(x.functions||'las propias de la labor acordada')+'. Régimen: '+(x.mode==='Puertas adentro'?'PUERTAS ADENTRO (Arts. 149 y 150).':'PUERTAS AFUERA, sujeto a la jornada máxima legal.'),'',
+  'SEGUNDO (Lugar): '+placesText(w)+'.','',
+  'TERCERO (Jornada): '+x.days.map(d=>DOW[d]).join(', ')+', de '+x.start+' a '+x.end+' horas, con '+x.lunch+' minutos de colación. Tendrá derecho a descansos, feriados y vacaciones legales.','',
+  'CUARTO (Remuneración): '+clp(x.rate)+' bajo modalidad '+x.modality.toLowerCase()+', pagada con frecuencia '+x.freq.toLowerCase()+'.'+al+'\nPago por transferencia a '+w.bank.name+', '+w.bank.type+' N° '+(w.bank.number||'____')+', o en efectivo contra recibo firmado.','',
+  'QUINTO (Previsión): el empleador enterará las cotizaciones en Previred. Afiliación: '+w.prev.afp+' y '+w.prev.salud+'.','',
+  'SEXTO (Vigencia): '+(x.contract==='Plazo fijo'?'plazo fijo desde el '+fmtL(x.startDate)+' hasta el '+(x.endDate?fmtL(x.endDate):'____')+'.':'indefinido, con ingreso el '+fmtL(x.startDate)+'.'),'',
+  'SÉPTIMO (Ejemplares): se firma en dos ejemplares. El empleador lo registrará en Mi DT dentro de 15 días.','',
+  '______________________          ______________________',e.name||'Empleador','RUT '+(e.rut||'____'),'',p.name||'Trabajador/a','RUT '+(p.rut||'____'),'',
+  '* Borrador referencial generado por Jornada. Revísalo y regístralo en dt.gob.cl.'].join('\n');
+}
+function finiquitoText(w,t){const e=S.emp,p=w.p;return ['BORRADOR DE FINIQUITO','','En '+(e.city||'Santiago').split(',')[0]+', a '+fmtL(t.date)+'.','EMPLEADOR: '+e.name+' · RUT '+e.rut,'TRABAJADOR/A: '+p.name+' · RUT '+p.rut,'LABOR: '+w.w.labor+' ('+w.w.mode+')','PERÍODO: '+fmtS(w.w.startDate)+' al '+fmtS(t.date),'CAUSAL: '+CAUSAL.find(c=>c[0]===t.causal)[1],'','(+) Sueldo pendiente: '+clp(t.pending),'(+) Vacaciones proporcionales ('+String(t.vacDays).replace('.',',')+' días): '+clp(t.vacPay),'(+) Indemnización u otros: '+clp(t.indemnity),'(−) Descuentos: '+clp(t.discounts),'TOTAL LÍQUIDO: '+clp(t.total),t.notes?'\nObservaciones: '+t.notes:'','','El/la trabajador/a declara recibir conforme la suma indicada.','','______________________          ______________________',e.name+'          '+p.name,'','* Ratificar ante notario, Inspección del Trabajo o Mi DT (Art. 177).'].join('\n')}
+
+/* ---------- vistas trabajador (simples) ---------- */
+function crewWorker(cap){const ms=crewOf(cap.id);if(!ms.length)return'';
+  let h='<h2>Mi cuadrilla</h2><div class="card">'+ms.map(m=>{const c=S.ck[m.id][TODAY],a=S.att[m.id][TODAY];
+    if(a&&a.s==='A')return '<div class="crewrow"><div class="grow"><div class="name">'+esc(m.p.name)+'</div><div class="sub" style="color:var(--a);font-weight:700">No vino</div></div></div>';
+    if(c&&c.in)return '<div class="crewrow"><div class="grow"><div class="name">'+esc(m.p.name)+'</div><div class="sub" style="color:var(--p);font-weight:700">Llegó '+c.in.t+(c.out?' · se fue '+c.out.t:'')+'</div></div></div>';
+    return '<label class="crewsel"><input type="checkbox" value="'+m.id+'" checked><span class="grow"><b>'+esc(m.p.name)+'</b></span><button type="button" class="btn sm" data-a="crewabs" data-v="'+m.id+'">No vino</button></label>'}).join('');
+  const todo=ms.filter(m=>!(S.ck[m.id][TODAY]&&S.ck[m.id][TODAY].in)&&!(S.att[m.id][TODAY]&&S.att[m.id][TODAY].s==='A')),inNo=ms.filter(m=>S.ck[m.id][TODAY]&&S.ck[m.id][TODAY].in&&!S.ck[m.id][TODAY].out);
+  if(todo.length)h+='<button class="btn pri full" style="margin-top:12px" data-a="crewin">Marcar llegada de los marcados</button>';
+  if(inNo.length)h+='<button class="btn dark full" style="margin-top:8px" data-a="crewout">Marcar salida de todos ('+inNo.length+')</button>';
+  return h+'</div>';
+}
+function vWorHome(){
+  const w=W(S.wid),c=S.ck[w.id][TODAY],a=S.att[w.id][TODAY],on=works(w,TODAY);
+  let h=top('Hola, '+esc(first(w)),on?'Hoy trabajas de '+w.w.start+' a '+w.w.end+'.':'Hoy es tu día libre.');
+  const pend=S.outbox.filter(o=>!o.sent&&(o.wid===w.id||(W(o.wid)&&W(o.wid).crew===w.id)));
+  if(pend.length)h+='<div class="offchip">'+svg('nowifi',26)+'<div class="grow"><b>Sin señal</b><br>'+pend.length+(pend.length>1?' marcas guardadas':' marca guardada')+' en tu teléfono. Se '+(pend.length>1?'enviarán':'enviará')+' sola'+(pend.length>1?'s':'')+' cuando vuelva la señal.</div><button class="btn sm" data-a="flush">Ya tengo señal</button></div>';
+  S.notifs.filter(n=>n.to===w.id&&!n.read).slice(0,3).forEach(n=>{h+='<div class="nban">'+svg('bell',24)+'<div class="grow">'+esc(n.text)+'</div><button class="btn sm" data-a="nread" data-v="'+n.id+'">Entendido</button></div>'});
+  S.pays.filter(p=>p.wid===w.id&&!p.recv&&p.type!=='Descuento').forEach(p=>{h+='<div class="paybox"><div class="sub">Tu empleador registró un '+(p.type==='Anticipo'?'anticipo':'pago')+' el '+fmtD(p.date)+' ('+p.method.toLowerCase()+')</div><div class="big" style="margin:4px 0 6px">'+clp(p.amount)+'</div><div class="name">¿Lo recibiste?</div><div class="seg"><button class="btn on-p" data-a="recv" data-v="'+p.id+'">Sí, lo recibí</button><button class="btn" data-a="norecv" data-v="'+p.id+'">No me ha llegado</button></div></div>'});
+  const state=(bg,icon,t,p)=>'<div class="state"><div class="ic" style="background:'+bg+'">'+svg(icon,44)+'</div><h3>'+t+'</h3>'+(p?'<p>'+p+'</p>':'')+'</div>';
+  h+='<div class="card" style="padding:20px 16px">';
+  if(!c||!c.in){
+    if(a&&a.s!=='P')h+=state(ST[a.s].c,'cal',ST[a.s].w,'Tu empleador marcó este día.');
+    else if(on)h+='<button class="go" data-a="confirm" data-v="in">LLEGUÉ<small>Toca cuando llegues</small></button><p class="sub" style="text-align:center;margin:18px 0 0">Se guarda la hora y dónde estás, aunque no tengas señal.</p>';
+    else h+=state('var(--x)','moon','Hoy descansas','Tus días son: '+w.w.days.map(d=>DOW[d]).join(', ')+'.')+'<button class="btn full" style="margin-top:14px" data-a="confirm" data-v="in">Me pidieron venir hoy</button>';
+  }else if(c.in.st==='pend')h+=state('var(--l)','clock','Esperando respuesta','Marcaste a las '+c.in.t+(c.in.nogps?' sin GPS':' fuera del lugar')+'. Tu empleador tiene que aceptarlo.');
+  else if(c.in.st==='rej')h+=c.in.out==='A'?state('var(--a)','warn','No se aceptó tu llegada',(c.in.note?'Mensaje: “'+esc(c.in.note)+'”. ':'')+'El día quedó como ausente.')+'<button class="btn full" style="margin-top:14px" data-a="tab" data-v="msgs">Hablar con mi empleador</button>':state('var(--a)','warn','Marca otra vez',(c.in.note?'Mensaje: “'+esc(c.in.note)+'”. ':'')+'Hazlo cuando estés en el lugar de trabajo.')+'<button class="go" data-a="confirm" data-v="in">LLEGUÉ<small>Marcar de nuevo</small></button>';
+  else if(!c.out)h+=state('var(--p)','ok','Llegaste a las '+c.in.t,(inside(c.in)?'Estás en '+esc(c.in.pl||'tu lugar de trabajo')+'.':'Tu empleador aceptó la excepción.')+(c.in.by?' Te marcó '+esc(first(W(c.in.by)))+'.':''))+'<button class="go out" data-a="confirm" data-v="out">ME VOY<small>Toca al terminar</small></button>';
+  else h+=state('var(--ink)','moon','Hoy trabajaste '+dur(workedMin(c)),'Llegaste '+c.in.t+' · te fuiste '+c.out.t+'. ¡Buen descanso!');
+  h+='</div>';
+  if(w.role==='capataz')h+=crewWorker(w);
+  const b=Math.max(0,globalBal(w));
+  h+='<button class="money" style="display:block;width:100%;border:0;text-align:left;cursor:pointer" data-a="tab" data-v="pay"><div style="font-size:16px;font-weight:600">Te deben hasta hoy</div><div class="big">'+clp(b)+'</div><div style="font-size:15px;opacity:.8;margin-top:4px">Toca para ver el detalle</div></button>';
+  h+='<h2>Avisar rápido</h2><div class="qk">'+QUICK.map((q,i)=>'<button data-a="quick" data-v="'+i+'">'+q[0]+'</button>').join('')+'</div>';
+  return h;
+}
+function vWorDays(){const w=W(S.wid);return top('Mis días','Los colores muestran cómo quedó cada día.')+calendar(w,'wor')+'<p class="note">Toca un día para ver a qué hora llegaste y te fuiste.</p>'}
+function vWorPay(){
+  const w=W(S.wid),f=fin(w,MK),b=globalBal(w),l=S.pays.filter(p=>p.wid===w.id).sort((a,c)=>c.date.localeCompare(a.date)),docs=S.docs.filter(d=>d.wid===w.id);
+  let h=top('Mi plata',w.w.modality==='Mensual'?'Sueldo de '+clp(w.w.rate)+' al mes.':clp(w.w.rate)+' por '+(w.w.modality==='Diario'?'día':'hora')+'.');
+  h+='<div class="money"><div style="font-size:16px;font-weight:600">Te deben hasta hoy</div><div class="big">'+clp(Math.max(0,b))+'</div></div>';
+  h+='<h2>Cómo se calcula ('+MON[T.getMonth()]+')</h2><div class="card lines">'+finLines(w,f).map(x=>'<div><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
+  h+='<h2>Lo que te han pagado</h2><div class="card">'+(l.length?l.map(p=>'<div class="hist"><div class="row"><div class="grow"><div class="name">'+(p.type==='Pago de sueldo'?'Pago':p.type)+'</div><div class="sub">'+fmtD(p.date)+' · '+p.method+'</div>'+(p.type==='Descuento'?'':p.recv?'<div class="sub" style="color:var(--p);font-weight:700">'+svg('ok',14)+' Recibido</div>':'')+'</div><div class="amt">'+clp(p.amount)+'</div></div><div class="links">'+(p.type!=='Descuento'&&!p.recv?'<button class="btn sm on-p" data-a="recv" data-v="'+p.id+'">Sí, lo recibí</button>':'')+(p.receipt?'<button class="btn sm" data-a="viewrec" data-v="'+p.id+'">Ver comprobante</button>':'')+'</div></div>').join(''):'<div class="empty">Todavía no hay pagos.</div>')+'</div>';
+  h+='<h2>Mis papeles</h2><div class="card"><div class="hist"><div class="row"><div class="grow"><div class="name">Mi contrato</div><div class="sub">Borrador con mis datos</div></div><button class="btn sm" data-a="pdfw" data-v="contract">Descargar PDF</button></div></div>'+docs.map(d=>'<div class="hist"><div class="row"><div class="grow"><div class="name">'+esc(d.cat)+'</div><div class="sub">'+mkLabel(d.month)+'</div></div><button class="btn sm" data-a="dldoc" data-v="'+d.id+'">Descargar</button></div></div>').join('')+'</div><p class="note">Es un cálculo de referencia. Ante dudas, conversa con tu empleador.</p><button class="btn full" style="margin-top:14px" data-a="switch">Cambiar de usuario</button>';
+  return h;
+}
+function threadHtml(wid,me){const ms=S.msgs.filter(m=>m.wid===wid);return '<div class="thread">'+(ms.length?ms.map(m=>'<div class="bub'+(m.from===me?' me':'')+'">'+esc(m.text)+'<small>'+fmtD(m.date)+' · '+m.t+'</small></div>').join(''):'<div class="empty">Sin mensajes todavía.</div>')+'</div>'}
+function vWorMsgs(){
+  const w=W(S.wid);S.msgs.filter(m=>m.wid===w.id&&m.from==='e').forEach(m=>m.read=true);
+  return top('Mensajes','Con '+esc(S.emp.name.split(' ')[0]))+'<div class="qk">'+QUICK.map((q,i)=>'<button data-a="quick" data-v="'+i+'">'+q[0]+'</button>').join('')+'</div>'+threadHtml(w.id,'w')+'<form id="fm"><label for="mt">Escribir un mensaje</label><textarea id="mt" placeholder="Escribe aquí" required></textarea><button class="btn pri full" style="margin-top:10px" type="submit">Enviar</button></form>';
+}
+
+/* ---------- pantallas de entrada ---------- */
+function welcome(){
+  return '<div class="welcome"><div style="font-weight:800;font-size:18px">Jornada</div><h1>La libreta de asistencia, en tu celular.</h1><p>Marca la llegada, lleva los pagos y avisa cambios, sin papeles.</p>'+
+  '<div class="book"><svg viewBox="0 0 260 180" role="img" aria-label="Libreta de asistencia"><rect x="30" y="22" width="200" height="146" rx="16" fill="#15161a" opacity=".12"/><rect x="22" y="12" width="200" height="146" rx="16" fill="#fff"/><rect x="22" y="12" width="200" height="34" rx="16" fill="#15161a"/><rect x="22" y="30" width="200" height="16" fill="#15161a"/>'+
+  Array.from({length:21},(_,i)=>{const x=38+(i%7)*25,y=58+Math.floor(i/7)*30,c=[0,1,2,3,4,7,8,9,10,11,14,15,16].includes(i)?(i===9?'#e5484d':i===15?'#f59e0b':'#1f9d55'):'#e7e5dd';return '<rect x="'+x+'" y="'+y+'" width="19" height="22" rx="6" fill="'+c+'"/>'}).join('')+
+  '<circle cx="196" cy="29" r="7" fill="#ffd23f"/></svg></div>'+
+  '<button class="wbtn" data-a="empgo">'+svg('team',30)+'<div><b>Soy empleador</b><span>Asistencia, pagos y documentos</span></div></button>'+
+  '<button class="wbtn alt" data-a="join">'+svg('me',30)+'<div><b>Soy trabajador(a)</b><span>Entrar con el link de mi empleador</span></div></button>'+
+  '<button class="btn full" style="margin-top:14px;background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demo">Probar con datos de ejemplo (sin cuenta)</button>'+(PREVIEW?'<div class="fine">Estás en la vista previa: aquí funciona el modo de prueba. Las cuentas reales funcionan en la app publicada.</div>':'')+'</div>';
+}
+function joinScreen(){
+  return '<div class="welcome">'+(S.device?'':'<button class="back" data-a="out" aria-label="Volver">'+svg('l')+'</button>')+'<h1 style="font-size:38px">Entra con tu link</h1><p>Tu empleador te manda un link por WhatsApp. Ábrelo desde este teléfono y listo: no necesitas clave.</p><div style="flex:1;min-height:30px"></div>'+
+  '<div class="card" style="background:#fff;color:var(--sunink)"><form id="fjoin"><label for="jc">¿Te dieron un código?</label><input id="jc" autocomplete="off" autocapitalize="off" placeholder="Ej: jmaria4821x" style="background:#fff;color:#15161a">'+(joinErr?'<div class="err">'+esc(joinErr)+'</div>':'')+'<button class="btn dark full" style="margin-top:12px" type="submit"'+(joinBusy?' disabled':'')+'>'+(joinBusy?'Activando tu app…':'Entrar')+'</button></form></div>'+
+  '<div class="fine">Cada link sirve una sola vez y deja este teléfono conectado solo a ti.</div></div>';
+}
+function authScreen(){return '<div class="welcome"><button class="back" data-a="out" aria-label="Volver">'+svg('l')+'</button><h1 style="font-size:38px">'+(authMode==='up'?'Crea tu cuenta':'Entra a tu cuenta')+'</h1><p>'+(authMode==='up'?'Con tu correo y una clave. Tus datos quedan respaldados y puedes entrar desde otro teléfono.':'Usa el correo y la clave con que creaste tu cuenta.')+'</p><div style="flex:1;min-height:24px"></div>'+
+  '<div class="card" style="background:#fff;color:#15161a"><form id="fauth"><label for="ae">Correo</label><input id="ae" type="email" autocomplete="email" required value="'+esc(authEmail)+'" style="background:#fff;color:#15161a"><label for="ap">Clave</label><input id="ap" type="password" autocomplete="'+(authMode==='up'?'new-password':'current-password')+'" minlength="6" required style="background:#fff;color:#15161a">'+(authErr?'<div class="err">'+esc(authErr)+'</div>':'')+'<button class="btn dark full" style="margin-top:12px" type="submit"'+(authBusy?' disabled':'')+'>'+(authBusy?'Un momento…':authMode==='up'?'Crear cuenta':'Entrar')+'</button></form>'+
+  '<button class="btn full" style="margin-top:8px;background:transparent;box-shadow:none;color:#15161a" data-a="authmode">'+(authMode==='up'?'Ya tengo cuenta: entrar':'No tengo cuenta: crear una')+'</button></div><div class="fine">'+(PREVIEW?'En esta vista previa las cuentas no se conectan a la nube. Usa la app publicada.':'La clave debe tener al menos 6 caracteres.')+'</div></div>'}
+const TOURS={
+  e:()=>[
+    {ic:'team',t:'Bienvenido a Jornada',p:'Lleva la asistencia, los pagos y los papeles de tu equipo desde el celular.'},
+    {ic:'pin',t:'Agrega a tu equipo',p:'Completa la ficha de cada persona: horario, sueldo y el lugar de trabajo en el mapa, con puntos o un área.'},
+    {ic:'crew',t:'Cuadrillas',p:'Si trabajas con cuadrillas, nombra a un capataz. Él marca la llegada y salida de su gente.'},
+    {ic:'link',t:'Invita con un link único',p:'Mándalo por WhatsApp. Al abrirlo, ese teléfono queda conectado solo a esa persona y no ve a nadie más.'},
+    {ic:'clock',t:'Mira las llegadas en vivo',p:'Ves la hora y el lugar. Si alguien marca fuera, tú aceptas o rechazas. Los cambios a días pasados piden confirmación.'},
+    {ic:'pay',t:'Pagos con respaldo',p:'Registra pagos y comprobantes. La trabajadora confirma en su app que los recibió.'},
+    {ic:'doc',t:'Contratos y reportes',p:'Desde la ficha generas contrato, reportes y finiquito en PDF. Esta guía queda en Ajustes.'}],
+  w:()=>{const w=W(S.wid),boss=S.emp.name.split(' ')[0],l=[
+    {ic:'lock',t:'Esta app es solo tuya',p:'Tu teléfono quedó conectado con '+boss+'. Nadie más ve tus datos y no necesitas clave.'},
+    {art:'go',t:'Cuando llegues, toca LLEGUÉ',p:'Se guarda la hora y el lugar. Tienes que estar en tu lugar de trabajo.'},
+    {art:'out',t:'Cuando te vayas, toca ME VOY',p:'Así queda anotado cuánto trabajaste.'},
+    {ic:'nowifi',t:'Funciona sin señal',p:'Si no hay internet, la marca se guarda en el teléfono y se envía sola después.'},
+    {art:'money',t:'Revisa tu plata',p:'En «Mi plata» ves cuánto te deben. Cuando te paguen, toca «Sí, lo recibí».'},
+    {art:'qk',t:'Avisa rápido',p:'¿Vas atrasada o no puedes ir? Toca un botón y tu empleador recibe el aviso.'},
+    {ic:'help',t:'¿Dudas?',p:'Toca «Ayuda» arriba a la derecha para ver esta guía otra vez o llamar a '+boss+'.'}];
+    if(w&&w.role==='capataz')l.splice(3,0,{ic:'crew',t:'Marca a tu cuadrilla',p:'En «Hoy» aparece tu cuadrilla. Marca quién llegó, quién no vino y la salida de todos.'});return l}
+};
+function tourHtml(){const sl=TOURS[tour.kind](),i=Math.min(tour.i,sl.length-1),x=sl[i],last=i===sl.length-1;
+  const art=x.art==='go'?'<div class="go mini">LLEGUÉ</div>':x.art==='out'?'<div class="go out mini">ME VOY</div>':x.art==='money'?'<div class="minimoney">Te deben hasta hoy<b>$470.833</b></div>':x.art==='qk'?'<div class="miniqk"><span>Voy atrasada</span><span>Hoy no puedo ir</span><span>Estoy enferma</span><span>Necesito un permiso</span></div>':'<div class="disc">'+svg(x.ic,84)+'</div>';
+  return '<div class="tour"><button class="skip" data-a="tskip">Saltar</button><div class="art">'+art+'</div><div class="dots" aria-label="Paso '+(i+1)+' de '+sl.length+'">'+sl.map((_,k)=>'<i class="'+(k===i?'on':'')+'"></i>').join('')+'</div><h1>'+x.t+'</h1><p>'+x.p+'</p><div class="'+(i?'seg':'opts')+'" style="margin-top:0">'+(i?'<button class="btn" data-a="tprev">Atrás</button>':'')+'<button class="btn dark" data-a="'+(last?'tskip':'tnext')+'">'+(last?'Empezar':'Siguiente')+'</button></div></div>'}
+function redeem(tok){tok=String(tok||'').trim().replace(/^.*#inv-/,'').toLowerCase();const w=S.workers.find(x=>x.invite&&x.invite.token===tok&&x.status==='activo');
+  if(!w)return 'Ese link o código no es válido. Pide uno nuevo a tu empleador.';
+  if(w.invite.used&&!(S.device&&S.device.wid===w.id))return 'Este link ya se usó en otro teléfono. Si cambiaste de teléfono, pide a tu empleador un link nuevo.';
+  if(!w.invite.used){w.invite.used=TODAY;notify('e',first(w)+' activó su app en su teléfono');log(w.id,TODAY,'App activada con link de invitación')}
+  S.device={wid:w.id,tok:w.invite.token,at:TODAY};S.role='wor';S.wid=w.id;S.tab='home';joinErr='';return null}
+function checkLate(){const n=new Date(),nm=n.getHours()*60+n.getMinutes();for(const w of active()){if(w.role==='miembro'||!works(w,TODAY)||S.ck[w.id][TODAY]||S.att[w.id][TODAY])continue;if(nm>tmin(w.w.start)+15)notify('e',first(w)+' no ha marcado su llegada (entraba a las '+w.w.start+')',{id:'late_'+w.id+'_'+TODAY})}}
+function flush(){const p=S.outbox.filter(o=>!o.sent);if(!p.length)return;for(const o of p){o.sent=true;const r=S.ck[o.wid]&&S.ck[o.wid][o.date];const k=o.kind==='out'||o.kind==='crewout'?'out':'in';if(r&&r[k])r[k].rcv=now()}save();toast(p.length===1?'Se envió la marca guardada':'Se enviaron '+p.length+' marcas guardadas');render(true)}
+let pinBuf='';
+function pinScreen(){return '<div class="pinwrap">'+svg('lock',40)+'<h1 style="margin:12px 0 0;font-size:28px">Ingresa tu PIN</h1><div class="pdots" id="pd">'+[0,1,2,3].map(i=>'<i class="'+(i<pinBuf.length?'on':'')+'"></i>').join('')+'</div><div class="pad">'+[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button data-a="pin" data-v="'+k+'" aria-label="'+(k==='⌫'?'Borrar':k)+'">'+k+'</button>').join('')+'</div><button class="btn" style="margin-top:22px;background:transparent;box-shadow:none" data-a="out">Salir</button></div>'}
+
+/* ---------- render ---------- */
+function render(keep){
+  const sc=keep?app.querySelector('main')?.scrollTop||0:0;
+  if(S.device){const dw=W(S.device.wid);if(S.mode==='cloud'){S.role='wor';S.wid=S.device.wid}else if(!dw||dw.status!=='activo'||!dw.invite||dw.invite.token!==S.device.tok){S.device=null;S.role='join';S.wid=null;joinErr='Tu empleador renovó tu acceso. Abre el link nuevo que te envió.'}else{S.role='wor';S.wid=dw.id}}
+  if(S.role==='emp'&&!locked)checkLate();
+  if(!tour){if(S.role==='emp'&&!locked&&!S.toured.e)tour={kind:'e',i:0};else if(S.device&&W(S.wid)&&!S.toured['w_'+S.wid])tour={kind:'w',i:0}}
+  if(plMap){try{plMap.remove()}catch(e){}plMap=null}
+  app.classList.toggle('wk',S.role==='wor');
+  if(S.device&&S.mode==='cloud'&&!W(S.device.wid))app.innerHTML='<div class="welcome" style="justify-content:center;text-align:center"><div class="spin"></div><h1 style="font-size:30px">Cargando tus datos…</h1><p style="margin:0 auto">Si no tienes señal, se cargarán cuando vuelva.</p></div>';
+  else if(tour)app.innerHTML=tourHtml();
+  else if(!S.role)app.innerHTML=welcome();
+  else if(S.role==='auth')app.innerHTML=authScreen();
+  else if(S.role==='join'||(S.role==='wor'&&!S.device))app.innerHTML=joinScreen();
+  else if(S.role==='emp'&&locked)app.innerHTML=pinScreen();
+  else{
+    let body,tabs;
+    if(S.role==='emp'){
+      body=S.detail?vDetail():S.tab==='team'?vEmpTeam():S.tab==='msgs'?vEmpMsgs():S.tab==='set'?vEmpSettings():vEmpHome();
+      const un=S.msgs.filter(m=>m.from==='w'&&!m.read).length;
+      tabs=[['home','Inicio','home'],['team','Equipo','team'],['msgs','Mensajes','msg',un],['set','Ajustes','gear']];
+    }else{
+      body=S.tab==='days'?vWorDays():S.tab==='pay'?vWorPay():S.tab==='msgs'?vWorMsgs():vWorHome();
+      const un=S.msgs.filter(m=>m.wid===S.wid&&m.from==='e'&&!m.read).length;
+      tabs=[['home','Hoy','home'],['days','Mis días','cal'],['pay','Mi plata','pay'],['msgs','Mensajes','msg',un]];
+    }
+    const cur=S.role==='emp'&&S.detail?'team':S.tab;
+    app.innerHTML='<main>'+body+'</main><nav class="nav" style="grid-template-columns:repeat('+tabs.length+',1fr)">'+tabs.map(x=>'<button class="'+(cur===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+svg(x[2])+x[1]+(x[3]?'<span class="n">'+x[3]+'</span>':'')+'</button>').join('')+'</nav>';
+    if(keep)app.querySelector('main').scrollTop=sc;
+  }
+  app.insertAdjacentHTML('beforeend','<div class="shade"><div class="sheet" role="dialog" aria-modal="true"></div></div><div class="toast" role="status"></div>');
+  save();
+}
+
+/* ---------- formularios en hojas ---------- */
+function dayWarns(w,s){const r=[],d=Math.round((dOf(TODAY)-dOf(s))/864e5);
+  if(s<TODAY)r.push('Estás modificando un día pasado ('+fmtD(s)+', hace '+d+' día'+(d===1?'':'s')+'). El cambio queda registrado y se le avisa a '+first(w)+'.');
+  if(s>TODAY)r.push('Es un día futuro. Normalmente solo se marcan vacaciones, feriado o licencia por adelantado.');
+  if(!works(w,s))r.push(DOW[dOf(s).getDay()].replace(/^./,c=>c.toUpperCase())+' no es día de trabajo de '+first(w)+' (trabaja '+w.w.days.map(x=>DAB[x]).join(', ')+'). Si se marca presente, queda como día extra.');
+  return r}
+const warnHtml=ws=>ws.map(t=>'<div class="warnbox">'+svg('warn',20)+'<span>'+t+'</span></div>').join('');
+let pendDay=null;
+function dayEdit(wid,s){
+  const w=W(wid),a=S.att[wid][s]||{s:'',ot:0,note:''},c=S.ck[wid][s],lg=S.log.filter(x=>x.wid===wid&&x.date===s),wm=workedMin(c);
+  let h='<h3>'+fmtD(s)+' · '+esc(first(w))+'</h3><div class="sub">'+(works(w,s)?'Día de trabajo, '+w.w.start+' a '+w.w.end:'Fuera de su jornada')+'</div>'+warnHtml(dayWarns(w,s));
+  if(c&&c.in)h+='<div class="ckday"><div class="inout" style="margin-top:0"><div><span>Llegada</span><b>'+c.in.t+'</b></div><div><span>Salida</span><b>'+(c.out?c.out.t:'—')+'</b></div><div><span>Trabajado</span><b>'+(wm!==null?dur(wm):'—')+'</b></div></div>'+ckBlock(c.in,false)+(c.in.reason?'<div class="why">Motivo: “'+esc(c.in.reason)+'”</div>':'')+'</div>';
+  if(lg.length)h+='<div class="ckday"><div class="name">Registro del día</div>'+lg.map(x=>'<div class="logl"><b>'+x.t+'</b><span>'+esc(x.text)+'</span></div>').join('')+'</div>';
+  h+='<form id="fday" data-w="'+wid+'" data-d="'+s+'"><h4>¿Cómo quedó el día?</h4><div class="stsel">'+Object.entries(ST).map(([k,x])=>'<button type="button" class="'+(a.s===k?'on':'')+'" data-a="pickst" data-v="'+k+'"><i style="background:'+x.c+'"></i>'+(k==='L'?'Licencia':x.t)+'</button>').join('')+'</div><input type="hidden" id="ds" value="'+a.s+'">'+
+    '<h4>Horas extra</h4><div class="step"><button type="button" class="ib" data-a="ot" data-v="-0.5" aria-label="Menos">−</button><b id="dot">'+(a.ot||0)+'</b><span class="sub">horas · '+clp(otRate(w))+' c/u</span><button type="button" class="ib" data-a="ot" data-v="0.5" aria-label="Más">+</button></div>'+
+    '<label for="dn2">Nota</label><input id="dn2" value="'+esc(a.note||'')+'" placeholder="Ej: salió antes por trámite"><div class="opts"><button class="btn pri" type="submit">Guardar</button>'+(a.s?'<button class="btn" type="button" data-a="clearday">Quitar marca</button>':'')+'<button class="btn" type="button" data-a="close">Cancelar</button></div></form>';
+  sheet(h);
+}
+function dayWorker(s){
+  const w=W(S.wid),a=S.att[w.id][s],c=S.ck[w.id][s];
+  let h='<h3>'+fmtD(s)+'</h3><div class="state" style="padding-top:0"><div class="ic" style="background:'+(a?ST[a.s].c:'var(--x)')+';width:64px;height:64px">'+svg(a&&a.s==='P'?'ok':'cal',32)+'</div><h3 style="font-size:22px">'+(a?ST[a.s].w:works(w,s)?(s>TODAY?'Te toca trabajar':'Sin marcar'):'Día libre')+'</h3>'+(c&&c.in?'<p>Llegaste '+c.in.t+(c.out?' · te fuiste '+c.out.t:'')+'</p>':'')+(a&&a.ot?'<p>'+a.ot+' horas extra</p>':'')+'</div>';
+  h+='<div class="opts"><button class="btn pri" data-a="report" data-v="'+s+'">Algo está mal, avisar</button><button class="btn" data-a="close">Cerrar</button></div>';
+  sheet(h);
+}
+function workerForm(id){
+  const w=id?W(id):{p:{name:'',rut:'',nat:'Chilena',birth:'',marital:'Soltero/a',address:'',comuna:'',email:'',phone:''},w:{labor:'Labor doméstica',mode:'Puertas afuera',functions:'',modality:'Mensual',rate:'',freq:'Mensual',transport:0,meal:0,days:[1,2,3,4,5],start:'09:00',end:'18:00',lunch:60,contract:'Indefinido',endDate:'',startDate:TODAY},prev:{afp:'AFP Habitat',salud:'FONASA'},bank:{name:'BancoEstado',type:'CuentaRUT',number:''}};
+  const p=w.p,x=w.w,i=(id_,lab,val,extra)=>'<label for="'+id_+'">'+lab+'</label><input id="'+id_+'" value="'+esc(val)+'" '+(extra||'')+'>',s=(id_,lab,arr,val)=>'<label for="'+id_+'">'+lab+'</label><select id="'+id_+'">'+opt(arr,val)+'</select>';
+  sheet('<h3>'+(id?'Editar ficha':'Nuevo trabajador')+'</h3><form id="fw" data-id="'+(id||'')+'">'+
+  '<h4>Datos personales</h4>'+i('wn','Nombre completo *',p.name,'required')+'<div class="two"><div>'+i('wr','RUT *',p.rut,'inputmode="text" placeholder="12.345.678-9"')+'</div><div>'+i('wnat','Nacionalidad',p.nat)+'</div></div><div id="rerr">'+rutHint(p.rut)+'</div><div class="two"><div>'+i('wb','Nacimiento',p.birth,'type="date"')+'</div><div>'+s('wms','Estado civil',MARITAL,p.marital)+'</div></div>'+i('wa','Domicilio',p.address)+'<div class="two"><div>'+i('wc','Comuna',p.comuna)+'</div><div>'+i('wp','Teléfono',p.phone,'type="tel" placeholder="+56 9 1234 5678"')+'</div></div>'+i('we','Correo',p.email,'type="email"')+
+  '<h4>Rol en el trabajo</h4><label for="wrole">Tipo</label><select id="wrole">'+[['individual','Trabajador/a individual'],['capataz','Capataz de cuadrilla (marca a su gente)'],['miembro','Miembro de una cuadrilla']].map(o=>'<option value="'+o[0]+'"'+((w.role||'individual')===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select><div id="crewbox"'+(w.role==='miembro'?'':' hidden')+'><label for="wcrew">Cuadrilla de</label><select id="wcrew">'+(capList().filter(c=>c.id!==id).length?capList().filter(c=>c.id!==id).map(c=>'<option value="'+c.id+'"'+(w.crew===c.id?' selected':'')+'>'+esc(c.p.name)+'</option>').join(''):'<option value="">Primero crea un capataz</option>')+'</select><p class="note">Su lugar de trabajo será el mismo del capataz. El teléfono es opcional: el capataz puede marcarle.</p></div>'+
+  '<h4>Trabajo</h4><div class="two"><div>'+s('wl','Labor',LABOR,x.labor)+'</div><div>'+s('wmo','Modalidad',['Puertas afuera','Puertas adentro'],x.mode)+'</div></div><label for="wf">Funciones</label><textarea id="wf">'+esc(x.functions)+'</textarea>'+
+  '<label>Días de trabajo *</label><div class="daysel">'+[1,2,3,4,5,6,0].map(d=>'<button type="button" class="'+(x.days.includes(d)?'on':'')+'" data-a="tog" data-v="'+d+'">'+DS[d]+'</button>').join('')+'</div><div class="two"><div>'+i('ws','Entrada',x.start,'type="time"')+'</div><div>'+i('wen','Salida',x.end,'type="time"')+'</div></div>'+i('wlu','Colación (minutos)',x.lunch,'inputmode="numeric"')+
+  '<h4>Sueldo</h4><div class="two"><div>'+s('wmod','Forma de pago',['Mensual','Diario','Por hora'],x.modality)+'</div><div>'+i('wrt','Monto *',x.rate?clp(x.rate):'','inputmode="numeric" placeholder="$550.000" data-money')+'</div></div><div class="two"><div>'+s('wfq','Se paga',['Mensual','Quincenal','Semanal','Diario'],x.freq)+'</div><div>'+i('wtr','Movilización',clp(x.transport),'inputmode="numeric" data-money')+'</div></div>'+i('wme','Colación ($)',clp(x.meal),'inputmode="numeric" data-money')+
+  '<h4>Contrato</h4><div class="two"><div>'+s('wct','Tipo',['Indefinido','Plazo fijo'],x.contract)+'</div><div>'+i('wsd','Fecha de ingreso',x.startDate,'type="date"')+'</div></div>'+i('wed','Término (si es plazo fijo)',x.endDate,'type="date"')+
+  '<h4>Previsión y banco</h4><div class="two"><div>'+s('waf','AFP',AFP,w.prev.afp)+'</div><div>'+s('wsa','Salud',SALUD,w.prev.salud)+'</div></div><div class="two"><div>'+s('wbk','Banco',BANKS,w.bank.name)+'</div><div>'+s('wbt','Tipo de cuenta',ACCT,w.bank.type)+'</div></div>'+'<label for="wbn">N° de cuenta</label><input id="wbn" value="'+esc(w.bank.number)+'" inputmode="numeric"'+(w.bank.type==='CuentaRUT'?' readonly':'')+'><div id="bhint" class="sub" style="margin-top:6px">'+(w.bank.type==='CuentaRUT'?'La CuentaRUT es de BancoEstado y su número es el RUT sin dígito verificador. Se completa sola.':'')+'</div>'+
+  '<div class="opts"><button class="btn pri" type="submit">Guardar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');
+}
+function empForm(){const e=S.emp,i=(id_,lab,val,extra)=>'<label for="'+id_+'">'+lab+'</label><input id="'+id_+'" value="'+esc(val)+'" '+(extra||'')+'>';
+  sheet('<h3>Tus datos</h3><div class="sub">Se usan en el contrato y el finiquito.</div><form id="fe">'+i('en','Nombre completo',e.name,'required')+'<div class="two"><div>'+i('er','RUT',e.rut)+'</div><div>'+i('ena','Nacionalidad',e.nat)+'</div></div><div id="rerr">'+rutHint(e.rut)+'</div><div class="two"><div><label for="ems">Estado civil</label><select id="ems">'+opt(MARITAL,e.marital)+'</select></div><div>'+i('epr','Profesión',e.prof)+'</div></div>'+i('ead','Domicilio',e.address)+'<div class="two"><div>'+i('eco','Comuna',e.comuna)+'</div><div>'+i('eci','Ciudad / región',e.city)+'</div></div><div class="two"><div>'+i('eem','Correo',e.email,'type="email"')+'</div><div>'+i('eph','Teléfono',e.phone,'type="tel"')+'</div></div><div class="opts"><button class="btn pri" type="submit">Guardar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>')}
+function payForm(type){const w=W(S.detail),f=fin(w,MK),sug=type==='Pago de sueldo'?Math.max(0,globalBal(w)):0;
+  sheet('<h3>'+(type==='Pago de sueldo'?'Pagar sueldo':type==='Anticipo'?'Dar anticipo':'Registrar descuento')+'</h3><div class="sub">'+esc(w.p.name)+(type==='Pago de sueldo'?' · saldo pendiente '+clp(globalBal(w)):'')+'</div><form id="fp2" data-t="'+type+'"><label for="pa">Monto</label><input id="pa" inputmode="numeric" required data-money value="'+(sug?clp(sug):'')+'" placeholder="$50.000"><div class="two"><div><label for="pd">Fecha</label><input id="pd" type="date" value="'+TODAY+'"></div><div><label for="pm">Medio</label><select id="pm">'+opt(METHODS,'Transferencia')+'</select></div></div><label for="pn">Nota</label><input id="pn" placeholder="'+(type==='Descuento'?'Ej: daño de un objeto (con acuerdo)':'Ej: sueldo de '+MON[T.getMonth()])+'"><label for="pf">Comprobante (opcional)</label><input id="pf" type="file" accept="image/*,application/pdf"><div class="opts"><button class="btn pri" type="submit">Guardar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>')}
+function thread(wid){const w=W(wid);S.msgs.filter(m=>m.wid===wid&&m.from==='w').forEach(m=>m.read=true);render(true);
+  sheet('<h3>'+esc(w.p.name)+'</h3>'+threadHtml(wid,'e')+'<form id="fm2" data-w="'+wid+'"><label for="mt2">Responder</label><textarea id="mt2" required></textarea><div class="opts"><button class="btn pri" type="submit">Enviar</button><a class="btn" href="'+wa(w.p.phone,'')+'" target="_blank" rel="noopener">Abrir WhatsApp</a></div></form>')}
+
+/* ---------- archivos ---------- */
+function readFile(file){return new Promise((res,rej)=>{if(!file)return res(null);
+  if(file.type==='application/pdf'){if(file.size>1.5*1024*1024)return rej('El PDF pesa más de 1,5 MB.');const r=new FileReader();r.onload=()=>res({name:file.name,data:r.result});r.onerror=()=>rej('No se pudo leer el archivo.');r.readAsDataURL(file);return}
+  if(!file.type.startsWith('image/'))return rej('Sube una foto o un PDF.');
+  const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{const k=Math.min(1,1200/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);res({name:file.name.replace(/\.\w+$/,'')+'.jpg',data:c.toDataURL('image/jpeg',.75)})};img.onerror=()=>rej('No se pudo abrir la imagen.');img.src=u})}
+const money=v=>parseInt(String(v||'').replace(/\D/g,''),10)||0;
+async function copy(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||'Copiado')}catch(e){sheet('<h3>Copia este texto</h3><textarea style="min-height:240px" readonly>'+esc(t)+'</textarea><div class="opts"><button class="btn" data-a="close">Listo</button></div>')}}
+
+function applyDay(){const{id,s,rec}=pendDay,w=W(id),prev=S.att[id][s];if(s<TODAY)rec.edited=TODAY;if((prev&&prev.extra)||(!works(w,s)&&rec.s==='P'))rec.extra=true;S.att[id][s]=rec;
+  const txt=(prev?'cambió':'marcó')+' el día: '+ST[rec.s].t.toLowerCase()+(rec.ot?' · '+rec.ot+' h extra':'');log(id,s,'Empleador '+txt+(s<TODAY?' (día pasado)':'')+(!works(w,s)?' (fuera de jornada)':''));
+  if(s<TODAY||!works(w,s))S.msgs.push({id:uid('m'),wid:id,from:'e',text:'Modifiqué tu registro del '+fmtD(s)+': quedó como '+ST[rec.s].t.toLowerCase()+(rec.ot?' con '+rec.ot+' h extra':'')+'. Si algo no te parece, avísame.',date:TODAY,t:now(),read:false,auto:true});
+  pendDay=null;close();render(true);toast('Día guardado')}
+
+/* ---------- PDF y descargas ---------- */
+function pdfBlob(title,text){
+  const J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw 'No se pudo cargar el generador de PDF.';
+  const doc=new J({unit:'mm',format:'letter'}),W_=doc.internal.pageSize.getWidth(),H_=doc.internal.pageSize.getHeight(),m=20;
+  const clean=t=>String(t).replace(/[−–—]/g,'-').replace(/•/g,'-').replace(/[“”]/g,'"').replace(/[‘’]/g,"'");
+  let y=m;doc.setFont('helvetica','bold');doc.setFontSize(13);
+  for(const l of doc.splitTextToSize(clean(title),W_-2*m)){doc.text(l,m,y);y+=6.5}
+  y+=3;doc.setFont('helvetica','normal');doc.setFontSize(10.5);
+  for(const para of clean(text).split('\n')){
+    const lines=para.trim()?doc.splitTextToSize(para,W_-2*m):[''];
+    for(const l of lines){if(y>H_-m){doc.addPage();y=m}doc.text(l,m,y);y+=5.2}
+  }
+  const n=doc.getNumberOfPages();doc.setFontSize(8.5);doc.setTextColor(120);
+  for(let i=1;i<=n;i++){doc.setPage(i);doc.text('Generado con Jornada · página '+i+' de '+n,m,H_-10)}
+  return doc.output('blob');
+}
+async function saveFile(filename,data){
+  let d=null;try{d=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){d=null}
+  if(d){try{await d.save({filename,data});toast('Descargado: '+filename)}catch(err){if(err&&err.code==='declined')toast('Descarga cancelada');else if(err&&err.code==='rate_limited')toast('Espera un momento y vuelve a intentar');else toast('No se pudo descargar aquí')}return}
+  try{const blob=data instanceof Blob?data:new Blob([data]),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Descargado: '+filename)}catch(e){toast('No se pudo descargar aquí')}
+}
+const slug=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'');
+function dataUrlBlob(u){const[h,b]=u.split(',');const mime=h.slice(5).split(';')[0],bin=atob(b),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime})}
+async function downloadPdf(kind,wid){
+  const w=W(wid);
+  try{
+    if(kind==='contract')await saveFile('Contrato_'+slug(w.p.name)+'.pdf',pdfBlob('Contrato de trabajo · '+w.p.name,contractText(w)));
+    if(kind==='fin')await saveFile('Finiquito_'+slug(w.p.name)+'.pdf',pdfBlob('Finiquito · '+w.p.name,finiquitoText(w,w.term)));
+    if(kind==='rep')await saveFile('Reporte_'+slug(w.p.name)+'_'+S.mk+'.pdf',pdfBlob('Reporte mensual · '+w.p.name,reportText(w,fin(w,S.mk))+'\n\n'+finLines(w,fin(w,S.mk)).map(l=>l[0]+': '+l[1]).join('\n')));
+  }catch(err){toast(typeof err==='string'?err:'No se pudo crear el PDF')}
+}
+
+/* ---------- check-in ---------- */
+let pendC=null,ckKind='in';
+function simBase(){const w=W(S.wid);return pCenter(placesOf(w)[0])}
+function startCk(kind){
+  ckKind=kind;
+  sheet('<h3>Buscando dónde estás…</h3><div class="sub">Si el teléfono pregunta, toca «Permitir». Funciona aunque no tengas internet.</div><div class="spin"></div>');
+  let done=false;
+  const fail=()=>{if(done)return;done=true;sheet('<h3>No pudimos leer el GPS</h3><div class="sub">Este visor de prototipos bloquea la ubicación; en la app publicada se usa el GPS real. Para probar, elige:</div><div class="opts"><button class="btn pri" data-a="sim" data-v="in">Simular: estoy en el lugar</button><button class="btn" data-a="sim" data-v="off">Simular: en el lugar, sin internet</button><button class="btn" data-a="sim" data-v="out">Simular: estoy en otro lugar</button><button class="btn" data-a="sim" data-v="weak">Simular: señal débil</button><button class="btn" data-a="nogps">Marcar solo con la hora (sin GPS)</button><button class="btn" data-a="close">Cancelar</button></div>')};
+  try{navigator.geolocation.getCurrentPosition(p=>{if(done)return;done=true;gotPos({lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy),sim:false})},fail,{enableHighAccuracy:true,timeout:20000,maximumAge:30000})}catch(e){fail()}
+  setTimeout(fail,21000);
+}
+function gotPos(c){
+  const me=W(S.wid);c.t=now();c.off=!!c.off||!navigator.onLine;
+  const queue=(wid,kind)=>{if(c.off)S.outbox.push({id:uid('o'),wid,kind,date:TODAY,t:c.t,sent:false})};
+  const done=msg=>{close();render();toast(c.off?'Guardado sin señal. Se enviará solo':msg)};
+  if(ckKind==='crew'||ckKind==='crewout'){
+    const ids=ckKind==='crew'?crewSel:crewOf(me.id).filter(m=>{const x=S.ck[m.id][TODAY];return x&&x.in&&!x.out}).map(m=>m.id);const names=[];
+    for(const id of ids){const rec=S.ck[id][TODAY]||(S.ck[id][TODAY]={});const cc=stamp(Object.assign({},c,{wid:id,by:me.id}));
+      if(ckKind==='crew'){if(c.nogps){cc.st='pend';cc.reason='Marcado por el capataz sin GPS'}else if(cc.ins)cc.st='ok';else{cc.st='pend';cc.reason='Marcado por el capataz fuera del lugar ('+fmtM(cc.d)+')'}rec.in=cc}else rec.out=cc;
+      names.push(first(W(id)));queue(id,ckKind);log(id,TODAY,(ckKind==='crew'?'Llegada':'Salida')+' marcada por el capataz '+first(me))}
+    notify('e',first(me)+' marcó la '+(ckKind==='crew'?'llegada':'salida')+' de '+names.join(', ')+(c.off?' (sin señal)':''));
+    return done((ckKind==='crew'?'Llegada':'Salida')+' marcada: '+names.join(', '))}
+  c.wid=me.id;stamp(c);
+  const rec=S.ck[me.id][TODAY]||(S.ck[me.id][TODAY]={});
+  if(ckKind==='out'){rec.out=c;queue(me.id,'out');log(me.id,TODAY,'Salida marcada '+(c.nogps?'sin GPS':inside(c)?'en '+c.pl:'fuera del lugar ('+fmtM(dist(c))+')'));notify('e',first(me)+' se fue a las '+c.t);return done('Listo. Saliste a las '+c.t)}
+  pendC=c;
+  if(c.nogps){c.st='pend';c.reason='No se pudo leer el GPS';rec.in=c;delete rec.out;queue(me.id,'in');log(me.id,TODAY,'Llegada marcada sin GPS');notify('e',first(me)+' marcó su llegada a las '+c.t+' sin GPS. Revísala.');return done('Guardado. Tu empleador debe confirmarlo')}
+  if(c.acc>100){sheet('<h3>La señal está débil</h3><div class="sub">No sabemos bien dónde estás (±'+c.acc+' m). Acércate a una ventana o sal a un lugar abierto y prueba otra vez.</div><div class="opts"><button class="btn pri" data-a="confirm" data-v="in">Probar otra vez</button><button class="btn" data-a="askex">Avisar a mi empleador</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  const extra=!works(me,TODAY);
+  if(c.ins&&!extra){c.st='ok';rec.in=c;delete rec.out;queue(me.id,'in');log(me.id,TODAY,'Llegada en '+c.pl);notify('e',first(me)+' llegó a las '+c.t+' ('+c.pl+')');return done('¡Listo! Llegaste a las '+c.t)}
+  if(c.ins&&extra){c.st='pend';c.extra=true;c.reason='Me pidieron venir hoy (día fuera de mi jornada).';rec.in=c;queue(me.id,'in');log(me.id,TODAY,'Llegada en día fuera de jornada');notify('e',first(me)+' marcó llegada en un día que no le toca. Revísala.');return done('Avisamos a tu empleador')}
+  if(S.strict){sheet('<h3>No estás en tu lugar de trabajo</h3><div class="sub">Estás a '+fmtM(dist(c))+' de '+esc(c.pl)+'. Para marcar tienes que estar ahí.</div>'+mapSvg(c,false)+'<div class="opts"><button class="btn pri" data-a="confirm" data-v="in">Ya llegué, probar otra vez</button><button class="btn" data-a="askex">Avisar a mi empleador por qué</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  c.st='pend';c.extra=extra;rec.in=c;queue(me.id,'in');log(me.id,TODAY,'Llegada fuera del lugar ('+fmtM(dist(c))+')');notify('e',first(me)+' marcó llegada fuera del lugar. Revísala.');done('Tu empleador debe aceptar la llegada');
+}
+
+/* ---------- invitación ---------- */
+function inviteSheet(id){const w=W(id);if(!w.invite||!w.invite.token){w.invite={token:newTok(),created:TODAY,used:null};save()}
+  const link=location.href.split('#')[0]+'#inv-'+w.invite.token,used=w.invite.used;
+  sheet('<h3>Invitar a '+esc(first(w))+'</h3><div class="sub">'+(used?'Activó la app el '+fmtD(used)+'. Este link ya no sirve en otro teléfono.':'Link único: funciona una sola vez. Al abrirlo, ese teléfono queda conectado solo a '+esc(first(w))+' y no puede ver a nadie más.')+'</div><div class="linkbox">'+esc(link)+'</div><div class="sub" style="margin-top:6px">Código: <b>'+esc(w.invite.token)+'</b></div><div class="opts">'+
+  (used?'':(w.p.phone?'<a class="btn pri" href="'+wa(w.p.phone,'Hola '+first(w)+', esta es tu app Jornada para marcar tu llegada y ver tus pagos. Ábrela desde tu celular (sirve una sola vez): '+link)+'" target="_blank" rel="noopener">Enviar por WhatsApp</a>':'<div class="why">'+esc(first(w))+' no tiene teléfono en su ficha. Si no usa celular, su capataz puede marcarle.</div>')+'<button class="btn" data-a="copylink" data-v="'+esc(link)+'">Copiar link</button>')+
+  '<button class="btn" data-a="newlink" data-v="'+id+'">'+(used?'Cambió de teléfono: crear link nuevo':'Crear link nuevo (anula este)')+'</button>'+(used||S.mode!=='demo'?'':'<button class="btn" data-a="trydev" data-v="'+id+'">Probar en este teléfono (prueba)</button>')+'<button class="btn" data-a="close">Listo</button></div>')}
+
+/* ---------- editor de lugar de trabajo ---------- */
+let plDraft=null,plMode='point',plMap=null,plLayers=null,plArea=[];
+function loadLeaflet(){return new Promise((res,rej)=>{if(window.L)return res(window.L);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=()=>window.L?res(window.L):rej();sc.onerror=()=>rej();document.head.appendChild(sc)})}
+function placeEditor(wid){const w=W(wid);plDraft={wid,places:JSON.parse(JSON.stringify(placesOf(w)))};plArea=[];plMode='point';
+  sheet('<h3>Lugar de trabajo · '+esc(first(w))+'</h3><div class="sub">Marca uno o varios puntos con su radio, o dibuja un área, por ejemplo un huerto o un fundo.'+(w.role==='capataz'?' Se aplica también a su cuadrilla.':'')+'</div>'+
+  '<div class="seg"><button class="btn dark" id="mPoint" data-a="plmode" data-v="point">Agregar punto</button><button class="btn" id="mArea" data-a="plmode" data-v="area">Dibujar área</button></div>'+
+  '<div id="plhelp" class="note">Toca el mapa donde está el lugar.</div><div id="plmap" class="plmap"></div><div id="plnote" class="note" hidden>Si no ves las calles, este visor bloquea el mapa; en la app publicada se ven. Igual puedes marcar tocando o con tu ubicación actual.</div>'+
+  '<div class="two"><div><label for="plr">Radio de los puntos</label><select id="plr">'+[50,100,150,300,500,1000].map(r=>'<option value="'+r+'"'+(r===S.emp.radius?' selected':'')+'>'+r+' m</option>').join('')+'</select></div><div><label for="pln">Nombre</label><input id="pln" placeholder="Ej: Casa, Huerto norte"></div></div>'+
+  '<div class="seg"><button class="btn" data-a="plhere">Usar mi ubicación actual</button><button class="btn" id="plfinish" data-a="plfinish" hidden>Terminar área</button></div>'+
+  '<h4>Lugares</h4><div id="pllist"></div><div class="opts"><button class="btn pri" data-a="plsave">Guardar lugares</button><button class="btn" data-a="close">Cancelar</button></div>');
+  drawPlList();
+  loadLeaflet().then(initPlMap).catch(()=>{const el=document.getElementById('plmap');if(el)el.innerHTML='<div class="empty" style="padding:20px">No se pudo cargar el mapa (sin internet). Puedes marcar con tu ubicación actual.</div>'});
+}
+function initPlMap(L){const el=document.getElementById('plmap');if(!el||!plDraft)return;if(plMap){try{plMap.remove()}catch(e){}plMap=null}
+  const c=pCenter(plDraft.places[0]||{lat:S.emp.lat,lng:S.emp.lng});
+  plMap=L.map(el,{zoomControl:true,attributionControl:true}).setView([c.lat,c.lng],16);
+  const tl=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(plMap);
+  let errs=0;tl.on('tileerror',()=>{if(++errs===1){const n=document.getElementById('plnote');if(n)n.hidden=false}});
+  plLayers=L.layerGroup().addTo(plMap);drawPlLayers();
+  plMap.on('click',e=>plAdd(e.latlng.lat,e.latlng.lng));
+  setTimeout(()=>{if(!plMap)return;plMap.invalidateSize();const b=[];plDraft.places.forEach(p=>p.type==='area'?p.pts.forEach(q=>b.push([q.lat,q.lng])):b.push([p.lat,p.lng]));if(b.length>1)plMap.fitBounds(b,{padding:[30,30],maxZoom:17})},250);
+}
+function drawPlLayers(){if(!plMap||!window.L||!plLayers)return;const L=window.L;plLayers.clearLayers();
+  plDraft.places.forEach(p=>{if(p.type==='area')L.polygon(p.pts.map(q=>[q.lat,q.lng]),{color:'#1f9d55',weight:3,fillOpacity:.2,dashArray:'6 4'}).addTo(plLayers).bindTooltip(p.name||'Área',{permanent:true,direction:'center'});else{L.circle([p.lat,p.lng],{radius:p.radius,color:'#1f9d55',weight:2,fillOpacity:.15}).addTo(plLayers);L.circleMarker([p.lat,p.lng],{radius:8,color:'#fff',weight:3,fillColor:'#15161a',fillOpacity:1}).addTo(plLayers).bindTooltip(p.name||'Punto')}});
+  if(plArea.length){L.polyline(plArea.map(q=>[q.lat,q.lng]),{color:'#2346ff',weight:3}).addTo(plLayers);plArea.forEach(q=>L.circleMarker([q.lat,q.lng],{radius:7,color:'#fff',weight:2,fillColor:'#2346ff',fillOpacity:1}).addTo(plLayers))}}
+function drawPlList(){const el=document.getElementById('pllist');if(!el)return;
+  el.innerHTML=plDraft.places.length?plDraft.places.map((p,i)=>'<div class="hist"><div class="row"><span>'+svg(p.type==='area'?'flag':'pin')+'</span><div class="grow"><div class="name">'+esc(p.name||(p.type==='area'?'Área':'Punto'))+'</div><div class="sub">'+(p.type==='area'?'Área de '+p.pts.length+' esquinas · '+areaHa(p):'Punto con radio de '+p.radius+' m')+'</div></div><button class="btn sm" data-a="pldel" data-v="'+i+'">Quitar</button></div></div>').join(''):'<div class="empty">Aún no hay lugares. Agrega al menos uno.</div>';
+  const fb=document.getElementById('plfinish');if(fb){fb.hidden=plMode!=='area';fb.textContent='Terminar área ('+plArea.length+' esquinas)'}}
+function plAdd(lat,lng){const ni=document.getElementById('pln'),nm=ni?ni.value.trim():'';
+  if(plMode==='point'){plDraft.places.push({type:'point',name:nm||'Punto '+(plDraft.places.length+1),lat,lng,radius:+document.getElementById('plr').value});if(ni)ni.value='';toast('Punto agregado')}
+  else{plArea.push({lat,lng});toast('Esquina '+plArea.length+' agregada')}
+  drawPlLayers();drawPlList()}
+
+/* ---------- nube (Supabase) ---------- */
+const SB_URL='https://nghyhiwyurxbprpvssrj.supabase.co',SB_KEY='sb_publishable_OxMY1TvECM24ldjFa2d3ig_mFgwuCGL',SKEY='jornada_sync_v1';
+const PREVIEW=/claudeusercontent|claude\.ai/.test(location.hostname);
+const GEN=['attendance','checkins','payments','docs','messages','notifs','logs'];
+let sb=null,sbLoading=null,me=null,sync=null,syncBusy=false,syncTimer=null,needRender=false,firstPull=true,joinBusy=false,authMode='in',authErr='',authBusy=false,authEmail='';
+const seenN=new Set();
+function resetSync(){sync={ready:false,synced:{},queue:{},since:{},lastPull:0,lastKeys:0,err:''};saveSync()}
+function saveSync(){try{localStorage.setItem(SKEY,JSON.stringify({me,sync}))}catch(e){}}
+try{const x=JSON.parse(localStorage.getItem(SKEY));if(x){me=x.me||null;sync=x.sync||null}}catch(e){}
+if(!sync)sync={ready:false,synced:{},queue:{},since:{},lastPull:0,lastKeys:0,err:''};
+function canon(o){if(o===null||typeof o!=='object')return JSON.stringify(o===undefined?null:o);if(Array.isArray(o))return '['+o.map(canon).join(',')+']';return '{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canon(o[k])).join(',')+'}'}
+function hash(str){let a=0xdeadbeef,b=0x41c6ce57;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return(b>>>0).toString(36)+(a>>>0).toString(36)}
+const EID=()=>me?(me.kind==='emp'?me.uid:me.empId):null;
+const PUSH=()=>me&&me.kind==='emp'?['employers','workers',...GEN]:['attendance','checkins','payments','messages','notifs','logs'];
+function bootSb(){if(sb)return Promise.resolve(sb);if(sbLoading)return sbLoading;
+  sbLoading=new Promise(res=>{const done=()=>{try{if(!sb&&window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'jornada_auth'}})}catch(e){sb=null}sbLoading=null;res(sb)};
+    if(window.supabase)return done();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';sc.onload=done;sc.onerror=done;document.head.appendChild(sc)});
+  return sbLoading}
+function rowsFromS(){const E=EID(),R={};const add=(t,k,row)=>{(R[t]||(R[t]={}))[k]=row};const P=PUSH();
+  if(P.includes('employers')){add('employers',me.uid,{id:me.uid,data:{emp:S.emp,strict:S.strict}});
+    for(const w of S.workers){const d=Object.assign({},w);delete d.id;delete d.invite;add('workers',w.id,{employer_id:E,id:w.id,invite_token:w.invite&&w.invite.token||null,crew_id:w.role==='miembro'&&w.crew?w.crew:null,data:d})}}
+  for(const wid in S.att)for(const d in S.att[wid])add('attendance',wid+'|'+d,{employer_id:E,id:wid+'|'+d,worker_id:wid,data:S.att[wid][d]});
+  for(const wid in S.ck)for(const d in S.ck[wid])add('checkins',wid+'|'+d,{employer_id:E,id:wid+'|'+d,worker_id:wid,data:S.ck[wid][d]});
+  for(const x of S.pays)add('payments',x.id,{employer_id:E,id:x.id,worker_id:x.wid,data:x});
+  if(P.includes('docs'))for(const x of S.docs)add('docs',x.id,{employer_id:E,id:x.id,worker_id:x.wid,data:x});
+  for(const x of S.msgs)add('messages',x.id,{employer_id:E,id:x.id,worker_id:x.wid,data:x});
+  for(const x of S.notifs)add('notifs',x.id,{employer_id:E,id:x.id,worker_id:x.to,data:x});
+  for(const x of S.log){if(!x.id)x.id=uid('l');add('logs',x.id,{employer_id:E,id:x.id,worker_id:x.wid,data:x})}
+  for(const t of P)R[t]=R[t]||{};return R}
+function computeDiff(){if(!me||!sync.ready)return;const R=rowsFromS();
+  for(const t in R){const sy=sync.synced[t]||(sync.synced[t]={});
+    for(const k in R[t]){const h=hash(canon(R[t][k]));if(sy[k]!==h){sy[k]=h;sync.queue[t+'|'+k]={t,op:'up',row:R[t][k]}}}
+    for(const k in sy)if(!(k in R[t])){delete sy[k];if(me.kind==='emp'&&t!=='employers')sync.queue[t+'|'+k]={t,op:'del',key:k}}}}
+const netErr=m=>!navigator.onLine||/fetch|network|load failed|timeout|offline/i.test(m);
+async function flushQueue(){const items=Object.entries(sync.queue);if(!items.length)return true;const groups={};
+  for(const[k,it]of items)(groups[it.t+'|'+it.op]||(groups[it.t+'|'+it.op]=[])).push([k,it]);let offline=false;
+  const send=async(t,op,g)=>{let r;try{r=op==='up'?await sb.from(t).upsert(g.map(x=>x[1].row),{onConflict:t==='employers'?'id':'employer_id,id'}):await sb.from(t).delete().eq('employer_id',EID()).in('id',g.map(x=>x[1].key))}catch(e){r={error:e}}return r.error?String(r.error.message||r.error):null};
+  for(const t of['employers','workers',...GEN])for(const op of['up','del']){const g=groups[t+'|'+op];if(!g||offline)continue;
+    const err=await send(t,op,g);
+    if(err&&netErr(err)){offline=true;sync.err='Sin conexión';continue}
+    if(err&&g.length>1){for(const x of g){const e1=await send(t,op,[x]);if(e1&&netErr(e1)){offline=true;break}if(e1)console.warn('Jornada: no se pudo guardar',t,x[0],e1);delete sync.queue[x[0]]}continue}
+    if(err)console.warn('Jornada: no se pudo guardar',t,err);
+    for(const x of g)delete sync.queue[x[0]]}
+  saveSync();return !offline&&!Object.keys(sync.queue).length}
+function localKeys(t){if(t==='workers')return S.workers.map(w=>w.id);if(t==='attendance'||t==='checkins'){const o=t==='attendance'?S.att:S.ck,l=[];for(const w in o)for(const d in o[w])l.push(w+'|'+d);return l}
+  return S[{payments:'pays',docs:'docs',messages:'msgs',notifs:'notifs',logs:'log'}[t]].map(x=>x.id)}
+function applyRow(t,r){
+  if(t==='employers'){if(me.kind==='emp'&&r.id!==me.uid)return;const d=r.data||{};if(d.emp)S.emp=Object.assign({},S.emp,d.emp);if('strict' in d)S.strict=d.strict;return}
+  if(t==='workers'){const w=Object.assign({},r.data,{id:r.id,invite:r.invite_token?{token:r.invite_token,used:r.invite_used?String(r.invite_used).slice(0,10):null}:null});const i=S.workers.findIndex(x=>x.id===r.id);if(i>=0)S.workers[i]=w;else S.workers.push(w);S.att[r.id]=S.att[r.id]||{};S.ck[r.id]=S.ck[r.id]||{};return}
+  if(t==='attendance'||t==='checkins'){const j=r.id.lastIndexOf('|'),wid=r.id.slice(0,j),d=r.id.slice(j+1),o=t==='attendance'?S.att:S.ck;(o[wid]||(o[wid]={}))[d]=r.data;return}
+  const key={payments:'pays',docs:'docs',messages:'msgs',notifs:'notifs',logs:'log'}[t],x=Object.assign({},r.data,{id:r.id}),L=S[key],i=L.findIndex(y=>y.id===r.id);if(i>=0)L[i]=x;else L.push(x);
+  if(t==='notifs'&&!x.read&&x.to===(me.kind==='emp'?'e':me.wid)&&!seenN.has(x.id)){seenN.add(x.id);if(!firstPull)sysNotify(x.text)}}
+function removeKey(t,k){if(t==='workers'){S.workers=S.workers.filter(w=>w.id!==k);return}
+  if(t==='attendance'||t==='checkins'){const j=k.lastIndexOf('|'),o=t==='attendance'?S.att:S.ck;if(o[k.slice(0,j)])delete o[k.slice(0,j)][k.slice(j+1)];return}
+  const key={payments:'pays',docs:'docs',messages:'msgs',notifs:'notifs',logs:'log'}[t];S[key]=S[key].filter(x=>x.id!==k)}
+function sortLists(){S.msgs.sort((a,b)=>(a.date+a.t).localeCompare(b.date+b.t));S.notifs.sort((a,b)=>(b.date+b.t).localeCompare(a.date+a.t));S.notifs=S.notifs.slice(0,300)}
+async function pull(full){
+  const tabs=['employers','workers',...GEN];let changed=false;const applied={};
+  const res=await Promise.all(tabs.map(t=>{let q=sb.from(t).select('*');const since=!full&&sync.since[t];if(since)q=q.gt('updated_at',since);return q.limit(10000)}));
+  for(let i=0;i<tabs.length;i++){const t=tabs[i],r=res[i];if(r.error)throw r.error;
+    for(const row of r.data||[]){if(!sync.since[t]||row.updated_at>sync.since[t])sync.since[t]=row.updated_at;if(sync.queue[t+'|'+row.id])continue;applyRow(t,row);changed=true;(applied[t]||(applied[t]=[])).push(row.id)}}
+  if(full||Date.now()-sync.lastKeys>120000){
+    computeDiff();
+    const kr=await Promise.all(tabs.slice(1).map(t=>sb.from(t).select('id').limit(20000)));
+    for(let i=0;i<kr.length;i++){const t=tabs[i+1],r=kr[i];if(r.error)throw r.error;const set=new Set((r.data||[]).map(x=>x.id));
+      for(const k of localKeys(t))if(!set.has(k)&&!sync.queue[t+'|'+k]){removeKey(t,k);if(sync.synced[t])delete sync.synced[t][k];changed=true}}
+    sync.lastKeys=Date.now()}
+  if(changed){sortLists();const R=rowsFromS();for(const t in applied)if(R[t])for(const k of applied[t])if(R[t][k])(sync.synced[t]||(sync.synced[t]={}))[k]=hash(canon(R[t][k]))}
+  for(const wid in S.ck)for(const d in S.ck[wid])for(const k of['in','out']){const c=S.ck[wid][d][k];if(c&&c.ins===undefined&&W(wid)){c.wid=c.wid||wid;stamp(c)}}
+  firstPull=false;
+  if(me.kind==='wor'&&sync.ready&&!W(me.wid)){revoke('Tu empleador renovó tu acceso. Abre el link nuevo que te envió.');return false}
+  return changed}
+function markOutboxSent(){const p=S.outbox.filter(o=>!o.sent);if(!p.length)return;for(const o of p){o.sent=true;const r=S.ck[o.wid]&&S.ck[o.wid][o.date];const k=o.kind==='out'||o.kind==='crewout'?'out':'in';if(r&&r[k])r[k].rcv=now()}toast(p.length===1?'Se envió la marca guardada':'Se enviaron '+p.length+' marcas guardadas')}
+function refreshView(){const sh=app.querySelector('.shade.open'),ae=document.activeElement;if(sh||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&app.contains(ae)))needRender=true;else render(true)}
+async function syncNow(o){o=o||{};if(S.mode!=='cloud'||!me||syncBusy)return;await bootSb();if(!sb)return;if(!navigator.onLine){sync.err='Sin conexión';return}
+  syncBusy=true;let changed=false;
+  try{
+    if(!sync.ready){changed=await pull(true);sync.ready=true;sync.lastPull=Date.now();if(me.kind==='wor'&&!W(me.wid)){revoke('Tu empleador renovó tu acceso. Abre el link nuevo que te envió.');return}}
+    computeDiff();const clean=await flushQueue();
+    if(clean){if(S.outbox.some(x=>!x.sent)){markOutboxSent();changed=true}
+      if(o.pull||o.full||Date.now()-sync.lastPull>20000){computeDiff();if(!Object.keys(sync.queue).length){if(await pull(!!o.full))changed=true;sync.lastPull=Date.now()}}
+      sync.err=''}
+  }catch(e){sync.err=String(e&&e.message||e);console.warn('Jornada sync',e)}
+  finally{syncBusy=false;saveSync()}
+  if(changed){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}refreshView()}}
+function revoke(msg){S.device=null;S.role='join';S.wid=null;S.workers=[];joinErr=msg;me=null;resetSync();try{sb&&sb.auth.signOut()}catch(e){}tour=null;render()}
+const authMsg=m=>/invalid login/i.test(m)?'Correo o clave incorrectos.':/already registered|already been registered/i.test(m)?'Ese correo ya tiene cuenta. Toca «Ya tengo cuenta: entrar».':/at least 6/i.test(m)?'La clave debe tener al menos 6 caracteres.':/not confirmed/i.test(m)?'Falta confirmar el correo: revisa tu bandeja de entrada.':/rate limit|too many/i.test(m)?'Demasiados intentos. Espera un momento.':netErr(m)?'No hay conexión. Revisa tu internet.':m;
+async function empLogin(email,pass,up){
+  await bootSb();if(!sb)return PREVIEW?'En la vista previa no hay conexión con la nube. Usa la app publicada o el modo de prueba.':'No hay conexión. Necesitas internet para entrar la primera vez.';
+  try{const cur=(await sb.auth.getSession()).data.session;if(cur&&cur.user&&cur.user.is_anonymous)return 'Este teléfono está conectado como trabajador(a). Usa otro teléfono para la cuenta de empleador.';
+    const r=up?await sb.auth.signUp({email,password:pass}):await sb.auth.signInWithPassword({email,password:pass});
+    if(r.error)return authMsg(r.error.message||'');
+    if(!r.data.session)return 'Te enviamos un correo para confirmar tu cuenta. Confírmalo y vuelve a entrar.';
+    const pin=S.pin;S=blankState();S.mode='cloud';S.role='emp';S.pin=pin;S.emp.email=email;me={uid:r.data.user.id,kind:'emp',email};resetSync();locked=false;
+    await syncNow({pull:true});if(sync.err&&!sync.ready)return 'Entraste, pero no se pudieron cargar tus datos: '+sync.err;return null}
+  catch(e){return authMsg(String(e&&e.message||e))}}
+async function redeemCloud(tok){tok=String(tok||'').trim().replace(/^.*#inv-/,'').toLowerCase();if(!tok)return 'Escribe el código que te mandaron.';
+  await bootSb();if(!sb)return PREVIEW?'En la vista previa no hay conexión con la nube. Abre el link en la app publicada.':'Necesitas internet para activar la app. Vuelve a abrir el link cuando tengas señal.';
+  try{let ses=(await sb.auth.getSession()).data.session;
+    if(ses&&ses.user&&!ses.user.is_anonymous)return 'Este teléfono tiene abierta una cuenta de empleador. Abre el link en el teléfono de la trabajadora.';
+    if(!ses){const r=await sb.auth.signInAnonymously();if(r.error)return /anonymous/i.test(r.error.message)?'Falta activar el acceso de trabajadores en Supabase (inicio de sesión anónimo).':authMsg(r.error.message||'');ses=r.data.session}
+    const{data,error}=await sb.rpc('redeem_invite',{tok});
+    if(error){const m=error.message||'';return /used/.test(m)?'Este link ya se usó en otro teléfono. Si cambiaste de teléfono, pide a tu empleador un link nuevo.':/invalid/.test(m)?'Ese link o código no es válido. Pide uno nuevo a tu empleador.':authMsg(m)}
+    const keep={pin:S.pin,notifyOn:S.notifyOn};S=blankState();Object.assign(S,keep);S.mode='cloud';S.role='wor';S.wid=data.worker_id;S.device={wid:data.worker_id,tok,at:TODAY};
+    me={uid:ses.user.id,kind:'wor',empId:data.employer_id,wid:data.worker_id};resetSync();tour=null;
+    await syncNow({pull:true});return null}
+  catch(e){return authMsg(String(e&&e.message||e))}}
+function loadDemoCloud(){const d=seed();for(const w of d.workers)w.invite=w.invite?{token:newTok(),created:TODAY,used:null}:null;d.log.forEach(l=>{if(!l.id)l.id=uid('l')});
+  Object.assign(S,{workers:d.workers,att:d.att,ck:d.ck,pays:d.pays,docs:d.docs,msgs:d.msgs,notifs:d.notifs,log:d.log});
+  if(!S.emp.homeSet)Object.assign(S.emp,{lat:d.emp.lat,lng:d.emp.lng,homeSet:true});if(!S.emp.name)Object.assign(S.emp,{name:d.emp.name,rut:d.emp.rut,prof:d.emp.prof,address:d.emp.address,comuna:d.emp.comuna,phone:d.emp.phone})}
+async function bootCloud(){
+  if(pendingInvite){const tok=pendingInvite;pendingInvite=null;const err=await redeemCloud(tok);joinBusy=false;if(err){joinErr=err;if(!S.device)S.role='join'}render();return}
+  if(S.mode!=='cloud'||!me)return;await bootSb();if(!sb)return;
+  try{const ses=(await sb.auth.getSession()).data.session;
+    if(!ses||ses.user.id!==me.uid){if(me.kind==='wor')revoke('Se cerró la sesión de este teléfono. Pide a tu empleador un link nuevo.');else{me=null;resetSync();S.role='auth';authErr='Tu sesión se cerró. Vuelve a entrar.';render()}return}}catch(e){}
+  syncNow({pull:true})}
+setInterval(()=>{if(document.visibilityState==='visible')syncNow({pull:true})},20000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow({pull:true})});
+
+/* ---------- eventos ---------- */
+app.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-a]');
+  if(!b){if(e.target.classList.contains('shade'))close();return}
+  const a=b.dataset.a,v=b.dataset.v;
+  if(a==='role'){if(S.device)return;S.role=v;S.tab='home';S.detail=null;S.mk=MK;locked=v==='emp'&&!!S.pin;pinBuf='';render();return}
+  if(a==='join'){S.role='join';joinErr='';render();return}
+  if(a==='out'){if(S.device)return;if(S.mode==='cloud'&&me&&me.kind==='emp'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">Tus datos quedan guardados en la nube. Para volver a entrar necesitas tu correo y tu clave.</div><div class="opts"><button class="btn on-a" data-a="logout">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}if(S.role==='emp'&&S.mode==='demo'){S=blankState();render();return}S.role=null;S.wid=null;S.detail=null;authErr='';render();return}
+  if(a==='logout'){close();try{sb&&sb.auth.signOut()}catch(e){}me=null;resetSync();const pin=S.pin;S=blankState();S.pin=pin;locked=false;render();return}
+  if(a==='empgo'){if(S.mode==='cloud'&&me&&me.kind==='emp'){S.role='emp';locked=!!S.pin}else{S.role='auth';authErr=''}render();return}
+  if(a==='authmode'){authMode=authMode==='up'?'in':'up';authErr='';render();return}
+  if(a==='demo'){S=seed();S.role='emp';S.toured.e=false;locked=false;render();return}
+  if(a==='syncnow'){toast('Sincronizando…');syncNow({pull:true,full:true}).then(()=>{render(true);toast(sync.err?'No se pudo: '+sync.err:'Todo sincronizado')});return}
+  if(a==='loaddemo'){sheet('<h3>¿Cargar ejemplos?</h3><div class="sub">Se agregan 6 trabajadores de ejemplo con su asistencia y pagos. Puedes borrarlos después con «Borrar todo».</div><div class="opts"><button class="btn pri" data-a="loaddemook">Cargar ejemplos</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='loaddemook'){loadDemoCloud();close();S.tab='home';render();toast('Ejemplos cargados');return}
+  if(a==='wipe'){sheet('<h3>¿Borrar todo?</h3><div class="sub">Se borran todos los trabajadores, asistencia, pagos, mensajes y documentos de tu cuenta. No se puede deshacer.</div><div class="opts"><button class="btn on-a" data-a="wipeok">Sí, borrar todo</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='wipeok'){S.workers=[];S.att={};S.ck={};S.pays=[];S.docs=[];S.msgs=[];S.notifs=[];S.log=[];S.detail=null;close();render();toast('Datos borrados');return}
+  if(a==='tnext'){tour.i++;render();return}
+  if(a==='tprev'){tour.i=Math.max(0,tour.i-1);render();return}
+  if(a==='tskip'){S.toured[tour.kind==='e'?'e':'w_'+S.wid]=true;tour=null;render();return}
+  if(a==='tourE'){tour={kind:'e',i:0};render();return}
+  if(a==='tourW'){close();tour={kind:'w',i:0};render();return}
+  if(a==='help'){const boss=S.emp.name.split(' ')[0],nOK=('Notification' in window)&&Notification.permission==='granted'&&S.notifyOn;sheet('<h3>Ayuda</h3><div class="opts"><button class="btn pri" data-a="tourW">Ver la guía otra vez</button><button class="btn" data-a="tab" data-v="msgs">Escribirle a '+esc(boss)+'</button><a class="btn" href="tel:'+esc(S.emp.phone.replace(/\s/g,''))+'">Llamar a '+esc(boss)+' ('+esc(S.emp.phone)+')</a>'+(nOK?'':'<button class="btn" data-a="notifon">Activar avisos en este teléfono</button>')+'<button class="btn" data-a="close">Cerrar</button></div>');return}
+  if(a==='dtap'){if(!S.device||S.mode!=='demo')return;taps++;clearTimeout(tapT);tapT=setTimeout(()=>taps=0,1500);if(taps>=5){taps=0;sheet('<h3>Modo prueba</h3><div class="sub">Esto existe solo en el prototipo. En la app real este teléfono queda conectado para siempre a esta persona.</div><div class="opts"><button class="btn on-a" data-a="unbind">Desvincular este teléfono</button><button class="btn" data-a="close">Cancelar</button></div>')}return}
+  if(a==='unbind'){S.device=null;S.role=null;S.wid=null;S.tab='home';close();render();return}
+  if(a==='notifs'){const l=S.notifs.filter(n=>n.to==='e').slice(0,40);sheet('<h3>Avisos</h3>'+(l.length?l.map(n=>'<div class="hist"><div class="name" style="font-size:15px;'+(n.read?'font-weight:500':'')+'">'+esc(n.text)+'</div><div class="sub">'+fmtD(n.date)+' · '+n.t+'</div></div>').join(''):'<div class="empty">Sin avisos.</div>')+'<div class="opts"><button class="btn" data-a="close">Cerrar</button></div>');l.forEach(n=>n.read=true);save();const p=app.querySelector('[data-a="notifs"] .pn');if(p)p.remove();return}
+  if(a==='nread'){const n=S.notifs.find(x=>x.id===v);if(n)n.read=true;render(true);return}
+  if(a==='notifon'){try{Notification.requestPermission().then(p=>{S.notifyOn=p==='granted';close();render(true);toast(p==='granted'?'Notificaciones activadas':'El teléfono no dio permiso')}).catch(()=>toast('Este visor no permite notificaciones. En la app instalada sí.'))}catch(e){toast('Este visor no permite notificaciones. En la app instalada sí.')}return}
+  if(a==='flush'){if(S.mode==='cloud'){syncNow({pull:true}).then(()=>{if(S.outbox.some(o=>!o.sent))toast('Todavía no hay señal. Se enviará sola.')})}else flush();return}
+  if(a==='recv'){const p=S.pays.find(x=>x.id===v);p.recv={date:TODAY,t:now()};log(p.wid,TODAY,'Confirmó que recibió '+clp(p.amount));notify('e',first(W(p.wid))+' confirmó que recibió '+clp(p.amount));render(true);toast('¡Gracias! Quedó confirmado');return}
+  if(a==='norecv'){const p=S.pays.find(x=>x.id===v);S.msgs.push({id:uid('m'),wid:p.wid,from:'w',text:'No me ha llegado el '+(p.type==='Anticipo'?'anticipo':'pago')+' de '+clp(p.amount)+' del '+fmtD(p.date)+'.',date:TODAY,t:now(),read:false});notify('e',first(W(p.wid))+' dice que no le ha llegado '+clp(p.amount));render(true);toast('Le avisamos a tu empleador');return}
+  if(a==='crewin'){crewSel=[...app.querySelectorAll('.crewsel input:checked')].map(x=>x.value);if(!crewSel.length){toast('Marca al menos a una persona');return}startCk('crew');return}
+  if(a==='crewout'){startCk('crewout');return}
+  if(a==='crewabs'){e.preventDefault();const m=W(v),me=W(S.wid);S.att[v][TODAY]={s:'A',ot:0,note:'Informado por el capataz '+first(me)};log(v,TODAY,'El capataz '+first(me)+' informó que no vino');notify('e',first(me)+' informó que '+first(m)+' no vino hoy');render(true);toast('Avisamos que '+first(m)+' no vino');return}
+  if(a==='nogps'){gotPos({lat:0,lng:0,acc:0,nogps:true});return}
+  if(a==='places'){placeEditor(v);return}
+  if(a==='plmode'){plMode=v;app.querySelector('#mPoint').className='btn'+(v==='point'?' dark':'');app.querySelector('#mArea').className='btn'+(v==='area'?' dark':'');app.querySelector('#plhelp').textContent=v==='point'?'Toca el mapa donde está el lugar.':'Toca cada esquina del área, en orden. Luego toca «Terminar área».';plArea=[];drawPlLayers();drawPlList();return}
+  if(a==='plhere'){try{navigator.geolocation.getCurrentPosition(p=>plAdd(p.coords.latitude,p.coords.longitude),()=>toast('No se pudo leer tu ubicación aquí. En la app publicada sí funciona.'),{enableHighAccuracy:true,timeout:15000})}catch(err){toast('Ubicación no disponible aquí')}return}
+  if(a==='plfinish'){if(plArea.length<3){toast('Marca al menos 3 esquinas');return}const nm=(app.querySelector('#pln').value||'').trim();plDraft.places.push({type:'area',name:nm||'Área '+(plDraft.places.length+1),pts:plArea.slice()});plArea=[];app.querySelector('#pln').value='';drawPlLayers();drawPlList();toast('Área agregada');return}
+  if(a==='pldel'){plDraft.places.splice(+v,1);drawPlLayers();drawPlList();return}
+  if(a==='plsave'){if(!plDraft.places.length){toast('Agrega al menos un lugar');return}const w=W(plDraft.wid);w.w.places=plDraft.places;if(w.role==='capataz')crewOf(w.id).forEach(m=>m.w.places=JSON.parse(JSON.stringify(plDraft.places)));log(w.id,TODAY,'Empleador cambió el lugar de trabajo');close();render(true);toast('Lugar de trabajo guardado');return}
+  if(a==='copylink'){copy(v,'Link copiado');return}
+  if(a==='newlink'){const w=W(v);const was=w.invite&&w.invite.used;w.invite={token:newTok(),created:TODAY,used:null};log(w.id,TODAY,'Empleador creó un link nuevo'+(was?' (se anuló el acceso del teléfono anterior)':''));save();inviteSheet(v);toast(was?'Link nuevo creado. El teléfono anterior quedó desconectado':'Link nuevo creado');return}
+  if(a==='trydev'){const w=W(v);sheet('<h3>Probar como '+esc(first(w))+'</h3><div class="sub">Este teléfono quedará conectado como el de '+esc(first(w))+', igual que en la app real: sin poder cambiar de persona.</div><div class="warnbox">'+svg('warn',20)+'<span>Para volver al modo empleador (solo en el prototipo), toca 5 veces la fecha que aparece arriba.</span></div><div class="opts"><button class="btn pri" data-a="trydevok" data-v="'+v+'">Sí, probar</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='trydevok'){const err=redeem(W(v).invite.token);close();if(err){toast(err);return}render();return}
+  if(a==='switch'){sheet('<h3>Cambiar de usuario</h3><div class="sub">En el prototipo puedes probar las dos vistas en este mismo teléfono.</div><div class="opts"><button class="btn pri" data-a="role" data-v="emp">Ver como empleador</button>'+(active().length>1?'<button class="btn" data-a="role" data-v="wor">Entrar como otro trabajador</button>':'')+'<button class="btn" data-a="out">Volver al inicio</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='pickw'){S.wid=v;S.tab='home';render();return}
+  if(a==='tab'){S.tab=v;S.detail=null;S.mk=MK;render();return}
+  if(a==='open'){S.detail=v;S.sub='asis';S.mk=MK;finDraft={};render();return}
+  if(a==='goto'){const[id,sub]=v.split('|');S.detail=id;S.sub=sub;S.mk=MK;S.tab='team';render();return}
+  if(a==='closedetail'){S.detail=null;render();return}
+  if(a==='sub'){S.sub=v;render(true);return}
+  if(a==='eq'){S.eqTab=v;render();return}
+  if(a==='mk'){S.mk=mkShift(S.mk,+v);render(true);return}
+  if(a==='day'){if(S.role==='emp')dayEdit(S.detail,v);else dayWorker(v);return}
+  if(a==='dayx'){const[id,s]=v.split('|');dayEdit(id,s);return}
+  if(a==='close'){close();return}
+  if(a==='dismiss'){S.dismissed.push(v);render(true);return}
+  if(a==='mark'&&!works(W(v.split('|')[0]),TODAY)&&!b.dataset.ok){const id=v.split('|')[0];sheet('<h3>Hoy no le toca a '+esc(first(W(id)))+'</h3>'+warnHtml(dayWarns(W(id),TODAY))+'<div class="opts"><button class="btn pri" data-a="mark" data-v="'+v+'" data-ok="1">Marcar igual</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='mark'){close();const[id,k]=v.split('|'),cur=S.att[id][TODAY];if(cur&&cur.s===k)delete S.att[id][TODAY];else S.att[id][TODAY]=Object.assign({ot:0,note:''},cur,{s:k},!works(W(id),TODAY)&&k==='P'?{extra:true}:{});log(id,TODAY,'Empleador marcó '+(S.att[id][TODAY]?ST[k].t.toLowerCase():'sin marca'));render(true);toast(S.att[id][TODAY]?first(W(id))+': '+ST[k].t:'Marca quitada');return}
+  if(a==='validate'){S.att[v][TODAY]=Object.assign({ot:0,note:''},S.att[v][TODAY],{s:'P'});log(v,TODAY,'Empleador confirmó presente');render(true);toast(first(W(v))+' quedó presente');return}
+  if(a==='accept'){const c=S.ck[v][TODAY].in;c.st='acc';c.dec=now();S.att[v][TODAY]=Object.assign({ot:0,note:''},S.att[v][TODAY],{s:'P'},c.extra?{extra:true}:{});log(v,TODAY,'Empleador aceptó la llegada'+(c.extra?' (día extra)':' fuera del lugar'));notify(v,'Tu empleador aceptó tu llegada de las '+c.t+'.');render(true);toast('Aceptado: '+first(W(v))+' quedó presente');return}
+  if(a==='reject'){const w=W(v);sheet('<h3>Rechazar llegada de '+esc(first(w))+'</h3><form id="fj" data-w="'+v+'"><label>¿Cómo queda el día?</label><div class="opts" style="margin-top:0"><label class="radio"><input type="radio" name="jo" value="R" checked><span><b>Pedir que marque de nuevo</b><br>Podrá marcar otra vez cuando esté en la casa.</span></label><label class="radio"><input type="radio" name="jo" value="A"><span><b>Marcar ausente</b><br>El día se descuenta. Úsalo solo si no vino a trabajar.</span></label></div><label for="jn">Mensaje para '+esc(first(w))+' (opcional)</label><textarea id="jn" placeholder="Ej: necesito que marques al llegar a la casa"></textarea><div class="opts"><button class="btn on-a" type="submit">Rechazar llegada</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='addot'){const[id,h]=v.split('|');S.att[id][TODAY]=Object.assign({s:'P',note:''},S.att[id][TODAY],{ot:+h});log(id,TODAY,'Empleador sumó '+h+' h extra');render(true);toast('Se sumaron '+h+' h extra');return}
+  if(a==='pickst'){b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');app.querySelector('#ds').value=v;return}
+  if(a==='ot'){const el=app.querySelector('#dot');el.textContent=Math.max(0,Math.min(12,(+el.textContent)+ +v));return}
+  if(a==='dayok'){applyDay();return}
+  if(a==='dayback'){if(pendDay){const p=pendDay;dayEdit(p.id,p.s);const f=app.querySelector('#fday');f.querySelectorAll('.stsel button').forEach(x=>x.classList.toggle('on',x.dataset.v===p.rec.s));f.querySelector('#ds').value=p.rec.s;f.querySelector('#dot').textContent=p.rec.ot;f.querySelector('#dn2').value=p.rec.note}return}
+  if(a==='clearday'){const f=app.querySelector('#fday'),id=f.dataset.w,s=f.dataset.d;if(s<TODAY&&!b.dataset.ok){sheet('<h3>¿Quitar la marca de un día pasado?</h3>'+warnHtml(dayWarns(W(id),s))+'<form id="fday" data-w="'+id+'" data-d="'+s+'"></form><div class="opts"><button class="btn on-a" data-a="clearday" data-ok="1">Sí, quitar</button><button class="btn" data-a="close">Cancelar</button></div>');return}delete S.att[id][s];log(id,s,'Empleador quitó la marca del día');close();render(true);toast('Marca quitada');return}
+  if(a==='tog'){b.classList.toggle('on');return}
+  if(a==='strict'){S.strict=!S.strict;render(true);toast(S.strict?'Ahora deben estar en la casa para marcar':'Ahora pueden marcar fuera y tú decides');return}
+  if(a==='hereloc'){try{navigator.geolocation.getCurrentPosition(p=>{const oLat=S.emp.lat,oLng=S.emp.lng;S.emp.lat=p.coords.latitude;S.emp.lng=p.coords.longitude;S.emp.homeSet=true;for(const w of S.workers)for(const pl of(w.w.places||[]))if(pl.type==='point'&&pl.lat===oLat&&pl.lng===oLng){pl.lat=S.emp.lat;pl.lng=S.emp.lng}render(true);toast('Listo: esta es la ubicación de tu casa')},()=>toast('No se pudo leer tu ubicación. Revisa que el teléfono dé permiso de ubicación a la app.'),{enableHighAccuracy:true,timeout:15000})}catch(err){toast('Ubicación no disponible aquí')}return}
+  if(a==='confirm'){startCk(v||'in');return}
+  if(a==='sim'){const b0=simBase(),r=()=>Math.random()*50-25,p=v==='out'?offM(b0,1300+Math.random()*900,-900):offM(b0,r(),r());gotPos({lat:p.lat,lng:p.lng,acc:v==='weak'?240:v==='out'?30:12,sim:true,off:v==='off'});return}
+  if(a==='askex'){sheet('<h3>¿Por qué marcas fuera de la casa?</h3><div class="sub">Tu empleador verá dónde estás y tu respuesta.</div><div class="opts">'+['Estoy comprando por encargo','Estoy acompañando a alguien de la casa','El GPS no me funciona bien'].map(t=>'<button class="btn" data-a="exq" data-v="'+t+'">'+t+'</button>').join('')+'</div><form id="fx"><label for="xr">Otro motivo</label><textarea id="xr" placeholder="Escribe aquí"></textarea><div class="opts"><button class="btn pri" type="submit">Enviar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='exq'){sendEx(v);return}
+  if(a==='quick'){const q=QUICK[+v];sheet('<h3>'+q[0]+'</h3><div class="sub">Se enviará este mensaje a tu empleador:</div><div class="why" style="font-size:18px">'+q[1]+'</div><div class="opts"><button class="btn pri" data-a="sendq" data-v="'+v+'">Enviar</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='sendq'){S.msgs.push({id:uid('m'),wid:S.wid,from:'w',text:QUICK[+v][1],date:TODAY,t:now(),read:false});close();render(true);toast('Mensaje enviado');return}
+  if(a==='report'){sheet('<h3>¿Qué está mal?</h3><form id="fr"><label for="rt">Cuéntale a tu empleador</label><textarea id="rt" required>'+(v?'El '+fmtD(v)+' ':'')+'</textarea><div class="opts"><button class="btn pri" type="submit">Enviar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='thread'){thread(v);return}
+  if(a==='wform'){workerForm(v||null);return}
+  if(a==='empform'){empForm();return}
+  if(a==='payform'){payForm(v);return}
+  if(a==='delpay'){sheet('<h3>¿Borrar este movimiento?</h3><div class="opts"><button class="btn on-a" data-a="delpayok" data-v="'+v+'">Borrar</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='delpayok'){S.pays=S.pays.filter(p=>p.id!==v);close();render(true);toast('Movimiento borrado');return}
+  if(a==='viewrec'||a==='viewdoc'){const x=a==='viewrec'?S.pays.find(p=>p.id===v).receipt:S.docs.find(d=>d.id===v);sheet('<h3>'+esc(x.name)+'</h3>'+(x.data.startsWith('data:image')?'<img class="thumb" src="'+x.data+'" alt="Comprobante">':'<div class="why">Archivo PDF guardado.</div>')+'<div class="opts"><button class="btn pri" data-a="'+(a==='viewrec'?'dlrec':'dldoc')+'" data-v="'+v+'">Descargar</button><button class="btn" data-a="close">Cerrar</button></div>');return}
+  if(a==='addrec'){sheet('<h3>Adjuntar comprobante</h3><form id="frc" data-p="'+v+'"><label for="rcf">Foto o PDF</label><input id="rcf" type="file" accept="image/*,application/pdf" required><div class="opts"><button class="btn pri" type="submit">Guardar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='pdf'){downloadPdf(v,S.detail);return}
+  if(a==='pdfw'){downloadPdf(v,S.wid);return}
+  if(a==='dldoc'||a==='dlrec'){const x=a==='dlrec'?S.pays.find(p=>p.id===v).receipt:S.docs.find(d=>d.id===v);if(x&&!x.data&&x.cat==='Contrato de trabajo'){downloadPdf('contract',x.wid);return}if(!x||!x.data){toast('Este documento de ejemplo no tiene archivo adjunto');return}const ext=x.data.startsWith('data:application/pdf')?'.pdf':'.jpg';saveFile(slug(x.name.replace(/\.\w+$/,''))+ext,dataUrlBlob(x.data));return}
+  if(a==='backupdl'){S.lastBackup=TODAY;save();saveFile('Respaldo_Jornada_'+TODAY+'.json',JSON.stringify(Object.assign({},S,{role:null}),null,1));render(true);return}
+  if(a==='deldoc'){S.docs=S.docs.filter(d=>d.id!==v);render(true);toast('Documento borrado');return}
+  if(a==='copy'){const w=W(S.detail);if(v==='rep')copy(reportText(w,fin(w,S.mk)),'Resumen copiado');if(v==='contract')copy(contractText(w),'Contrato copiado');if(v==='fin')copy(finiquitoText(w,w.term),'Finiquito copiado');return}
+  if(a==='invite'){inviteSheet(v);return}
+  if(a==='delw'){const w=W(v);sheet('<h3>¿Eliminar a '+esc(first(w))+'?</h3><div class="sub">Se borran su asistencia, pagos y documentos. Si terminó la relación laboral, mejor usa Finiquito para conservar el historial.</div><div class="opts"><button class="btn on-a" data-a="delwok" data-v="'+v+'">Eliminar</button><button class="btn" data-a="close">Cancelar</button></div>');return}
+  if(a==='delwok'){S.workers=S.workers.filter(w=>w.id!==v);delete S.att[v];delete S.ck[v];S.pays=S.pays.filter(p=>p.wid!==v);S.docs=S.docs.filter(d=>d.wid!==v);S.msgs=S.msgs.filter(m=>m.wid!==v);S.detail=null;close();render();toast('Trabajador eliminado');return}
+  if(a==='reactivate'){const w=W(v);w.status='activo';w.term=null;S.eqTab='activo';render(true);toast(first(w)+' está activo otra vez');return}
+  if(a==='pinset'){pinBuf='';sheet('<h3>'+(S.pin?'Nuevo PIN':'Activar PIN')+'</h3><form id="fpin"><label for="p1">PIN de 4 dígitos</label><input id="p1" inputmode="numeric" maxlength="4" pattern="\\d{4}" required autocomplete="off"><label for="p2">Repite el PIN</label><input id="p2" inputmode="numeric" maxlength="4" required autocomplete="off"><div id="perr"></div><div class="opts"><button class="btn pri" type="submit">Guardar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='pinoff'){S.pin='';render(true);toast('PIN desactivado');return}
+  if(a==='pin'){if(v==='⌫')pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=v;if(pinBuf.length===4){if(pinBuf===S.pin){locked=false;pinBuf='';render();return}pinBuf='';render();const d=app.querySelector('#pd');d.classList.add('shake');return}render();return}
+  if(a==='backup'){S.lastBackup=TODAY;save();copy(JSON.stringify(Object.assign({},S,{role:null}),null,1),'Respaldo copiado. Pégalo en un correo o nota.');render(true);return}
+  if(a==='restore'){sheet('<h3>Restaurar respaldo</h3><div class="sub">Reemplaza todos los datos actuales.</div><form id="frs"><label for="rf">Archivo de respaldo (.json)</label><input id="rf" type="file" accept="application/json,.json,.txt"><label for="rx">O pega el texto del respaldo</label><textarea id="rx"></textarea><div id="rerr"></div><div class="opts"><button class="btn on-a" type="submit">Restaurar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
+  if(a==='reset'){const r=S.role;S=seed();S.role=r;locked=false;tour=null;S.toured.e=true;render();toast('Datos de ejemplo reiniciados');return}
+});
+function sendEx(text){if(!pendC)return;const w=W(S.wid),rec=S.ck[w.id][TODAY]||(S.ck[w.id][TODAY]={});pendC.reason=text;pendC.st='pend';pendC.extra=!works(w,TODAY);rec.in=pendC;delete rec.out;if(pendC.off)S.outbox.push({id:uid('o'),wid:w.id,kind:'in',date:TODAY,t:pendC.t,sent:false});log(w.id,TODAY,'Llegada fuera del lugar ('+fmtM(dist(pendC))+') con motivo');notify('e',first(w)+' marcó fuera del lugar: “'+text+'”');pendC=null;close();render();toast('Avisamos a tu empleador')}
+function syncBank(){const bt=app.querySelector('#wbt'),bn=app.querySelector('#wbn'),bk=app.querySelector('#wbk'),h=app.querySelector('#bhint');if(!bt||!bn)return;if(bt.value==='CuentaRUT'){bk.value='BancoEstado';const r=rutCheck(app.querySelector('#wr').value);bn.value=r.ok?r.body:'';bn.readOnly=true;h.textContent=r.ok?'La CuentaRUT es de BancoEstado y su número es el RUT sin dígito verificador. Se completa sola.':'Escribe un RUT válido arriba y el número de la CuentaRUT se completa solo.'}else{bn.readOnly=false;h.textContent=''}}
+app.addEventListener('change',e=>{const t=e.target;if(t.id==='wbt'||t.id==='wbk'){if(t.id==='wbk'&&t.value!=='BancoEstado'&&app.querySelector('#wbt').value==='CuentaRUT')app.querySelector('#wbt').value='Cuenta Vista';syncBank()}if(t.dataset.c==='radius'){S.emp.radius=+t.value;render(true);toast('Radio: '+t.value+' m')}});
+app.addEventListener('input',e=>{const t=e.target;if(t.hasAttribute('data-money')){const n=money(t.value);t.value=n?clp(n):''}if(t.id==='wr'||t.id==='er'){t.value=fmtRut(t.value);const r=app.querySelector('#rerr');if(r)r.innerHTML=rutHint(t.value);syncBank()}
+  const f=t.closest('#ff');if(f){const q=id=>money(f.querySelector('#'+id).value);f.querySelector('#ftot').textContent=clp(q('fp')+q('fv')+q('fi')-q('fx2'))}});
+app.addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target,q=id=>f.querySelector('#'+id),val=id=>q(id).value.trim();
+  if(f.id==='fjoin'){const code=val('jc');if(S.mode==='demo'){const err=redeem(code);if(err){joinErr=err}render();return}joinBusy=true;joinErr='';render();const err=await redeemCloud(code);joinBusy=false;if(err)joinErr=err;render();return}
+  if(f.id==='fauth'){const em=val('ae'),pw=q('ap').value;authBusy=true;authErr='';authEmail=em;render();const err=await empLogin(em,pw,authMode==='up');authBusy=false;if(err){authErr=err;render();return}render();return}
+  if(f.id==='fday'){const id=f.dataset.w,s=f.dataset.d,st=val('ds');if(!st){toast('Elige cómo quedó el día');return}const rec={s:st,ot:+app.querySelector('#dot').textContent||0,note:val('dn2')};const ws=dayWarns(W(id),s);pendDay={id,s,rec};if(ws.length){sheet('<h3>¿Confirmas el cambio?</h3><div class="sub">'+esc(first(W(id)))+' · '+fmtD(s)+' → <b>'+ST[st].t+'</b>'+(rec.ot?' · '+rec.ot+' h extra':'')+'</div>'+warnHtml(ws)+'<div class="opts"><button class="btn pri" data-a="dayok">Sí, guardar el cambio</button><button class="btn" data-a="dayback">Volver a revisar</button></div>');return}applyDay();return}
+  if(f.id==='fj'){const id=f.dataset.w,o=f.querySelector('input[name=jo]:checked').value,c=S.ck[id][TODAY].in;c.st='rej';c.dec=now();c.out=o;c.note=val('jn');if(o==='A')S.att[id][TODAY]={s:'A',ot:0,note:'Llegada rechazada'};else delete S.att[id][TODAY];log(id,TODAY,'Empleador rechazó la llegada · '+(o==='A'?'marcado ausente':'pidió marcar de nuevo')+(c.note?' · “'+c.note+'”':''));notify(id,o==='A'?'Tu empleador no aceptó tu llegada y marcó el día como ausente.':'Tu empleador te pide marcar la llegada otra vez desde el lugar de trabajo.');close();render(true);toast('Llegada rechazada');return}
+  if(f.id==='fx'){const t=val('xr');if(!t){toast('Escribe el motivo o elige uno');return}sendEx(t);return}
+  if(f.id==='fm'){const t=val('mt');if(!t)return;S.msgs.push({id:uid('m'),wid:S.wid,from:'w',text:t,date:TODAY,t:now(),read:false});render(true);toast('Mensaje enviado');return}
+  if(f.id==='fm2'){const t=val('mt2'),id=f.dataset.w;if(!t)return;S.msgs.push({id:uid('m'),wid:id,from:'e',text:t,date:TODAY,t:now(),read:false});save();thread(id);toast('Mensaje enviado');return}
+  if(f.id==='fr'){const t=val('rt');if(!t)return;S.msgs.push({id:uid('m'),wid:S.wid,from:'w',text:t,date:TODAY,t:now(),read:false});close();render(true);toast('Mensaje enviado a tu empleador');return}
+  if(f.id==='fw'){
+    const rut=val('wr'),days=[...f.querySelectorAll('.daysel .on')].map(x=>+x.dataset.v),rate=money(val('wrt'));
+    if(!val('wn')){toast('Falta el nombre');return}
+    const rc=rutCheck(rut);if(!rc.ok){q('rerr').innerHTML='<div class="err">'+rc.msg+'</div>';q('wr').focus();toast('Revisa el RUT');return}
+    if(val('wbt')==='CuentaRUT'){q('wbk').value='BancoEstado';q('wbn').value=rc.body}
+    else if(val('wbn')&&!/^[0-9-]{6,20}$/.test(val('wbn'))){toast('El número de cuenta solo lleva números y guiones');q('wbn').focus();return}
+    if(!rate||!days.length){toast('Falta el monto o los días de trabajo');return}
+    if(val('wct')==='Plazo fijo'&&!val('wed')){toast('Indica la fecha de término del plazo fijo');return}
+    const id=f.dataset.id,w=id?W(id):{id:uid('w'),status:'activo',term:null,role:'individual',crew:null,invite:null};const keepPlaces=id&&w.w?w.w.places:null;
+    w.p={name:val('wn'),rut:fmtRut(rut),nat:val('wnat'),birth:val('wb'),marital:val('wms'),address:val('wa'),comuna:val('wc'),email:val('we'),phone:val('wp')};
+    w.w={labor:val('wl'),mode:val('wmo'),functions:val('wf'),modality:val('wmod'),rate,freq:val('wfq'),transport:money(val('wtr')),meal:money(val('wme')),days,start:val('ws')||'09:00',end:val('wen')||'18:00',lunch:money(val('wlu')),contract:val('wct'),endDate:val('wed'),startDate:val('wsd')||TODAY};
+    w.prev={afp:val('waf'),salud:val('wsa')};w.bank={name:val('wbk'),type:val('wbt'),number:val('wbn')};
+    const role=val('wrole'),crew=val('wcrew');if(role==='miembro'&&!crew){toast('Primero crea un capataz para su cuadrilla');return}
+    const oldPlaces=keepPlaces;w.role=role;w.crew=role==='miembro'?crew:null;w.w.places=role==='miembro'&&W(crew)?JSON.parse(JSON.stringify(placesOf(W(crew)))):(oldPlaces||[{type:'point',name:'Casa',lat:S.emp.lat,lng:S.emp.lng,radius:S.emp.radius}]);
+    if(role==='capataz')crewOf(w.id).forEach(m=>m.w.places=JSON.parse(JSON.stringify(w.w.places)));
+    if(!id){S.workers.push(w);S.att[w.id]={};S.ck[w.id]={};S.detail=w.id;S.sub='ficha';S.tab='team'}
+    close();render();toast(id?'Ficha guardada':first(w)+' agregado');return}
+  if(f.id==='fe'){const rut=val('er'),rc=rutCheck(rut);if(!rc.ok){q('rerr').innerHTML='<div class="err">'+rc.msg+'</div>';toast('Revisa el RUT');return}Object.assign(S.emp,{name:val('en'),rut:fmtRut(rut),nat:val('ena'),marital:val('ems'),prof:val('epr'),address:val('ead'),comuna:val('eco'),city:val('eci'),email:val('eem'),phone:val('eph')});close();render(true);toast('Datos guardados');return}
+  if(f.id==='fp2'){const n=money(val('pa'));if(!n){toast('Ingresa un monto');return}let rec=null;try{rec=await readFile(q('pf').files[0])}catch(err){toast(err);return}S.pays.push({id:uid('p'),wid:S.detail,type:f.dataset.t,method:val('pm'),amount:n,date:val('pd')||TODAY,note:val('pn'),receipt:rec,recv:null});if(f.dataset.t!=='Descuento')notify(S.detail,'Te registraron '+(f.dataset.t==='Anticipo'?'un anticipo':'un pago')+' de '+clp(n)+'. ¿Lo recibiste?',{quiet:true});else notify(S.detail,'Se registró un descuento de '+clp(n)+(val('pn')?': '+val('pn'):'')+'.');close();render(true);toast(f.dataset.t+' guardado: '+clp(n));return}
+  if(f.id==='frc'){try{const r=await readFile(q('rcf').files[0]);if(!r)return;S.pays.find(p=>p.id===f.dataset.p).receipt=r;close();render(true);toast('Comprobante adjuntado')}catch(err){toast(err)}return}
+  if(f.id==='fd'){let r=null;try{r=await readFile(q('df').files[0])}catch(err){toast(err);return}if(!r){toast('Elige un archivo');return}S.docs.push({id:uid('d'),wid:S.detail,cat:val('dc'),month:val('dm')||mkShift(MK,-1),name:r.name,data:r.data,note:val('dn'),date:TODAY});render(true);toast('Guardado en la bóveda');return}
+  if(f.id==='ff'){const w=W(S.detail),t={date:val('fdt')||TODAY,causal:val('fc'),pending:money(val('fp')),vacDays:parseFloat(val('fvd').replace(',','.'))||0,vacPay:money(val('fv')),indemnity:money(val('fi')),discounts:money(val('fx2')),notes:val('fn')};t.total=t.pending+t.vacPay+t.indemnity-t.discounts;
+    sheet('<h3>¿Cerrar la relación con '+esc(first(w))+'?</h3><div class="sub">Pasará a Finiquitados. Su historial se conserva.</div><div class="big" style="margin:10px 0">'+clp(t.total)+'</div><div class="opts"><button class="btn on-a" data-a="finok">Sí, cerrar</button><button class="btn" data-a="close">Cancelar</button></div>');finDraft=Object.assign({wid:w.id},t);return}
+  if(f.id==='fpin'){const a=val('p1'),b=val('p2');if(!/^\d{4}$/.test(a)){q('perr').innerHTML='<div class="err">Deben ser 4 números.</div>';return}if(a!==b){q('perr').innerHTML='<div class="err">Los PIN no coinciden.</div>';return}S.pin=a;close();render(true);toast('PIN activado');return}
+  if(f.id==='frs'){let txt=val('rx');const file=q('rf').files[0];if(file)txt=await file.text();try{const d=JSON.parse(txt);if(!d.workers||!d.emp)throw 0;S=Object.assign(d,{role:'emp',detail:null,tab:'home'});locked=false;close();render();toast('Respaldo restaurado')}catch(err){q('rerr').innerHTML='<div class="err">Ese respaldo no es válido.</div>'}return}
+});
+app.addEventListener('click',e=>{const b=e.target.closest('[data-a="finok"]');if(!b)return;const w=W(S.detail),t=Object.assign({},finDraft);delete t.wid;w.status='finiquitado';w.term=t;finDraft={};close();S.eqTab='finiquitado';render(true);toast('Relación laboral cerrada')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+window.addEventListener('online',()=>{if(S.mode==='demo'&&S.outbox.some(o=>!o.sent))flush()});
+for(const wid in S.ck)for(const d in S.ck[wid])for(const k of['in','out']){const c=S.ck[wid][d][k];if(c&&c.ins===undefined&&W(wid)){c.wid=c.wid||wid;stamp(c)}}
+let pendingInvite=null;
+if(location.hash.indexOf('#inv-')===0){const tok=location.hash.slice(5);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){try{location.hash=''}catch(e2){}}
+  if(S.mode==='demo'){const err=redeem(tok);if(err){joinErr=err;if(!S.device)S.role='join'}}else if(!S.device){pendingInvite=tok;S.role='join';joinBusy=true}}
+if(S.mode==='demo'&&navigator.onLine&&S.outbox&&S.outbox.some(o=>!o.sent)){setTimeout(flush,1500)}
+window.addEventListener('online',()=>syncNow({pull:true}));
+render();
+bootCloud();
+}
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+</script>
+</body>
+</html>
