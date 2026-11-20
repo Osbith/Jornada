@@ -594,6 +594,7 @@ const invState=w=>w.invite&&w.invite.used?'<span class="tag" style="color:var(--
 function vEmpTeam(){
   const all=S.workers.filter(w=>w.status===S.eqTab),list=S.eqTab==='activo'?all.filter(w=>w.role!=='miembro'||!W(w.crew)||W(w.crew).status!=='activo'):all,na=active().length,nf=S.workers.length-na;
   let h=top('Equipo',na+' activo'+(na===1?'':'s')+(nf?' · '+nf+' finiquitado'+(nf===1?'':'s'):''));
+  h+='<button class="btn full" style="margin:0 0 10px" data-a="teamstats">'+svg('chart',20)+'Estadísticas del equipo</button>';
   h+='<div class="seg" style="margin:0 0 14px"><button class="btn'+(S.eqTab==='activo'?' dark':'')+'" data-a="eq" data-v="activo">Activos ('+na+')</button><button class="btn'+(S.eqTab==='finiquitado'?' dark':'')+'" data-a="eq" data-v="finiquitado">Finiquitados ('+nf+')</button></div>';
   h+=list.length?list.map(w=>{const ms=w.role==='capataz'?crewOf(w.id):[];
     return '<div class="card"><button style="display:block;width:100%;text-align:left;border:0;background:none;padding:0;cursor:pointer;color:inherit" data-a="open" data-v="'+w.id+'"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+'</div><div class="sub">'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':'')+' · '+w.w.modality+' '+clp(w.w.rate)+'</div><div class="sub">'+w.w.days.map(d=>DAB[d]).join(', ')+' · '+w.w.start+' a '+w.w.end+'</div><div style="margin-top:4px">'+invState(w).replace('margin-left:4px','')+'</div></div>'+svg('r')+'</div></button>'+
@@ -642,50 +643,49 @@ function wStats(w,from,to){
   for(const p of S.pays)if(p.wid===w.id&&p.date>=from&&p.date<=to){if(p.type==='Descuento')r.disc+=+p.amount||0;else r.paid+=+p.amount||0}
   r.pct=r.sched?Math.round(Math.min(r.P,r.sched)/r.sched*100):null;return r}
 const hhmm=m=>pad(Math.floor(m/60))+':'+pad(Math.round(m%60));
-function vEmpStats(){
+const statChips=()=>{const P=[['mes','Este mes'],['prev','Mes anterior'],['30','Últimos 30 días'],['90','Últimos 3 meses']];const[from,to]=statRange();return '<div class="chips">'+P.map(x=>'<button class="chip'+((S.statP||'mes')===x[0]?' on':'')+'" data-a="statp" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div><div class="sub" style="margin:-4px 0 10px">Del '+fmtD(from)+' al '+fmtD(to)+'</div>'};
+const stTile=x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span>'+(x[2]?'<small>'+x[2]+'</small>':'')+'</div>';
+function personStats(w){const[from,to]=statRange(),r=wStats(w,from,to),v=vac(w);
+  return statChips()+'<div class="card wstat"><div class="row"><div class="grow"><div class="sub">Asistencia en el período</div><div class="big">'+(r.pct===null?'—':r.pct+'%')+'</div></div></div>'+
+  '<div class="stgrid" style="margin-top:12px">'+[
+    [r.P+(r.sched?' / '+r.sched:''),'Días trabajados',r.extra?r.extra+' fuera de jornada':''],
+    [r.A,'Ausencias',''],[r.L,'Licencia',''],[r.V,'Vacaciones',''],[r.unmarked,'Sin marcar',''],
+    [dur(r.worked),'Horas trabajadas',r.workedDays?'promedio '+dur(r.worked/r.workedDays)+' por día':'sin salidas marcadas'],
+    [r.ot+' h','Horas extra',''],
+    [r.arr?hhmm(r.arrSum/r.arr):'—','Llegada promedio','entra a las '+w.w.start],
+    [r.outs?hhmm(r.outSum/r.outs):'—','Salida promedio','sale a las '+w.w.end],
+    [r.late,'Atrasos',r.late?'promedio '+Math.round(r.lateSum/r.late)+' min':'más de 10 min tarde'],
+    [r.outside,'Marcó fuera del lugar',r.exAcc||r.exRej?r.exAcc+' aceptadas · '+r.exRej+' rechazadas':''],
+    [r.nogps,'Marcó sin GPS',''],
+    [clp(r.paid),'Pagado en el período',r.disc?'descuentos '+clp(r.disc):''],
+    [clp(globalBal(w)),'Saldo pendiente hoy',''],
+    [String(v.avail).replace('.',','),'Vacaciones disponibles','días']
+  ].map(stTile).join('')+'</div></div><p class="note">Cuenta como día trabajado el marcado «Presente» o con llegada válida en la app (aunque aún no lo confirmes). Las horas, la llegada y la salida promedio salen de las marcas de llegada y salida. La asistencia considera los días de trabajo según su horario, sin contar licencias, vacaciones ni feriados.</p>'}
+function vTeamStats(){
   const[from,to]=statRange(),ws=S.workers.filter(w=>w.status==='activo'||(w.term&&w.term.date>=from)),st=ws.map(w=>[w,wStats(w,from,to)]);
-  const P=[['mes','Este mes'],['prev','Mes anterior'],['30','Últimos 30 días'],['90','Últimos 3 meses']];
-  let h=top('Estadísticas','Del '+fmtD(from)+' al '+fmtD(to)+' · '+ws.length+' persona'+(ws.length===1?'':'s'));
-  h+='<div class="chips">'+P.map(x=>'<button class="chip'+((S.statP||'mes')===x[0]?' on':'')+'" data-a="statp" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>';
+  let h=top('Estadísticas del equipo',ws.length+' persona'+(ws.length===1?'':'s'),'closestats')+statChips();
   if(!ws.length)return h+'<div class="card empty">Todavía no hay trabajadores.</div>';
   const sum=k=>st.reduce((a,x)=>a+x[1][k],0),sched=sum('sched'),pres=st.reduce((a,x)=>a+Math.min(x[1].P,x[1].sched),0),late=sum('late'),arr=sum('arr');
-  h+='<h2>Resumen del equipo</h2><div class="stgrid">'+[
+  h+='<div class="stgrid">'+[
     [sched?Math.round(pres/sched*100)+'%':'—','Asistencia','días trabajados / días de trabajo según horario'],
     [dur(sum('worked')),'Horas trabajadas','según llegada y salida marcadas'],
     [sum('P'),'Días trabajados',sum('extra')?sum('extra')+' fuera de jornada':''],
     [sum('A'),'Ausencias',''],[sum('L'),'Días de licencia',''],[sum('V'),'Días de vacaciones',''],
     [late+(arr?' de '+arr:''),'Llegadas atrasadas','más de 10 min tarde'],[sum('ot')+' h','Horas extra',''],
     [sum('unmarked'),'Días sin marcar','días de trabajo sin registro'],[clp(sum('paid')),'Pagado en el período',sum('disc')?'descuentos '+clp(sum('disc')):'']
-  ].map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span>'+(x[2]?'<small>'+x[2]+'</small>':'')+'</div>').join('')+'</div>';
-  h+='<h2>Asistencia por persona</h2><div class="card">'+st.map(([w,r])=>{const v=r.pct,c=v===null?'var(--x)':v>=90?'var(--p)':v>=75?'var(--l)':'var(--a)';return '<div class="barrow"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(first(w))+'</span><span class="tr"><i style="width:'+(v||0)+'%;background:'+c+'"></i></span><b>'+(v===null?'—':v+'%')+'</b></div>'}).join('')+'<p class="note">Verde 90% o más · naranjo 75 a 89% · rojo menos de 75%.</p></div>';
-  h+='<h2>Detalle por persona</h2>'+st.map(([w,r])=>{const v=vac(w);
-    return '<div class="card wstat"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+'</div><div class="sub">'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':w.role==='miembro'?' · cuadrilla':'')+' · '+w.w.start+' a '+w.w.end+'</div></div><b style="font-size:20px">'+(r.pct===null?'—':r.pct+'%')+'</b></div>'+
-    '<div class="stgrid" style="margin-top:12px">'+[
-      [r.P+(r.sched?' / '+r.sched:''),'Días trabajados',r.extra?r.extra+' fuera de jornada':''],
-      [r.A,'Ausencias',''],[r.L,'Licencia',''],[r.V,'Vacaciones',''],[r.unmarked,'Sin marcar',''],
-      [dur(r.worked),'Horas trabajadas',r.workedDays?'promedio '+dur(r.worked/r.workedDays)+' por día':'sin salidas marcadas'],
-      [r.ot+' h','Horas extra',''],
-      [r.arr?hhmm(r.arrSum/r.arr):'—','Llegada promedio','entra a las '+w.w.start],
-      [r.outs?hhmm(r.outSum/r.outs):'—','Salida promedio','sale a las '+w.w.end],
-      [r.late,'Atrasos',r.late?'promedio '+Math.round(r.lateSum/r.late)+' min':'más de 10 min tarde'],
-      [r.outside,'Marcó fuera del lugar',r.exAcc||r.exRej?r.exAcc+' aceptadas · '+r.exRej+' rechazadas':''],
-      [r.nogps,'Marcó sin GPS',''],
-      [clp(r.paid),'Pagado en el período',r.disc?'descuentos '+clp(r.disc):''],
-      [clp(globalBal(w)),'Saldo pendiente hoy',''],
-      [String(v.avail).replace('.',','),'Vacaciones disponibles','días']
-    ].map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span>'+(x[2]?'<small>'+x[2]+'</small>':'')+'</div>').join('')+'</div>'+
-    '<button class="btn full" style="margin-top:10px" data-a="goto" data-v="'+w.id+'|asis">Ver su asistencia</button></div>'}).join('');
-  h+='<p class="note">Cuenta como día trabajado el marcado «Presente» o con llegada válida en la app (aunque aún no lo confirmes). Las horas trabajadas, la llegada y la salida promedio se calculan con las marcas de llegada y salida de la app. La asistencia considera los días de trabajo según su horario, sin contar licencias, vacaciones ni feriados.</p>';
+  ].map(stTile).join('')+'</div>';
+  h+='<h2>Asistencia por persona</h2><div class="card">'+st.map(([w,r])=>{const v=r.pct,c=v===null?'var(--x)':v>=90?'var(--p)':v>=75?'var(--l)':'var(--a)';return '<button class="barrow" style="width:100%;border:0;background:none;cursor:pointer;color:inherit;font:inherit;text-align:left" data-a="goto" data-v="'+w.id+'|stats"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(first(w))+'</span><span class="tr"><i style="width:'+(v||0)+'%;background:'+c+'"></i></span><b>'+(v===null?'—':v+'%')+'</b></button>'}).join('')+'<p class="note">Verde 90% o más · naranjo 75 a 89% · rojo menos de 75%. Toca a una persona para ver su detalle.</p></div>';
   return h;
 }
 
 /* ---------- detalle de trabajador (empleador) ---------- */
 function vDetail(){
   const w=W(S.detail);if(!w){S.detail=null;return vEmpTeam()}
-  const subs=[['asis','Asistencia'],['pagos','Pagos'],['rep','Reportes'],['docs','Documentos'],['fin','Finiquito'],['ficha','Ficha']];
+  const subs=[['asis','Asistencia'],['pagos','Pagos'],['rep','Reportes'],['stats','Estadísticas'],['docs','Documentos'],['fin','Finiquito'],['ficha','Ficha']];
   let h=top(esc(w.p.name),esc(w.w.labor)+' · '+w.w.modality+' '+clp(w.w.rate)+(w.status==='finiquitado'?' · finiquitado':''),'closedetail');
   h+='<div class="subtabs">'+subs.map(s=>'<button class="'+(S.sub===s[0]?'on':'')+'" data-a="sub" data-v="'+s[0]+'">'+s[1]+'</button>').join('')+'</div>';
   const f=fin(w,S.mk);
+  if(S.sub==='stats'){h+=personStats(w)}
   if(S.sub==='asis'){h+=calendar(w,'emp')+'<p class="note">Toca un día para ver llegada y salida, marcar asistencia, horas extra o notas. Los cambios a días pasados quedan registrados.</p>'}
   if(S.sub==='pagos'){
     h+='<div class="mhead"><button class="ib" data-a="mk" data-v="-1" aria-label="Mes anterior">'+svg('l')+'</button><b>'+mkLabel(S.mk)+'</b><button class="ib" data-a="mk" data-v="1" aria-label="Mes siguiente">'+svg('r')+'</button></div>';
@@ -894,9 +894,9 @@ function render(keep){
   else{
     let body,tabs;
     if(S.role==='emp'){
-      body=S.detail?vDetail():S.tab==='team'?vEmpTeam():S.tab==='stats'?vEmpStats():S.tab==='msgs'?vEmpMsgs():S.tab==='set'?vEmpSettings():vEmpHome();
+      body=S.detail?vDetail():S.tab==='team'?(S.teamStats?vTeamStats():vEmpTeam()):S.tab==='msgs'?vEmpMsgs():S.tab==='set'?vEmpSettings():vEmpHome();
       const un=S.msgs.filter(m=>m.from==='w'&&!m.read).length;
-      tabs=[['home','Inicio','home'],['team','Equipo','team'],['stats','Estadísticas','chart'],['msgs','Mensajes','msg',un],['set','Ajustes','gear']];
+      tabs=[['home','Inicio','home'],['team','Equipo','team'],['msgs','Mensajes','msg',un],['set','Ajustes','gear']];
     }else{
       body=S.tab==='days'?vWorDays():S.tab==='pay'?vWorPay():S.tab==='msgs'?vWorMsgs():S.tab==='prof'?vWorProfile():vWorHome();
       const un=S.msgs.filter(m=>m.wid===S.wid&&m.from==='e'&&!m.read).length;
@@ -1203,6 +1203,8 @@ app.addEventListener('click',async e=>{
   if(a==='out'){if(S.device)return;if(S.mode==='cloud'&&me&&me.kind==='emp'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">Tus datos quedan guardados en la nube. Para volver a entrar necesitas tu correo y tu clave.</div><div class="opts"><button class="btn on-a" data-a="logout">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}if(S.role==='emp'&&S.mode==='demo'){S=blankState();render();return}S.role=null;S.wid=null;S.detail=null;authErr='';render();return}
   if(a==='pwform'){sheet('<h3>Cambiar clave</h3><div class="sub">Elige una clave que recuerdes, de al menos 6 caracteres.</div><form id="fpw"><label for="np1">Clave nueva</label><input id="np1" type="password" autocomplete="new-password" minlength="6" required><label for="np2">Repite la clave nueva</label><input id="np2" type="password" autocomplete="new-password" minlength="6" required><div id="pwerr"></div><div class="opts"><button class="btn pri" type="submit">Guardar clave</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
   if(a==='statp'){S.statP=v;render(true);return}
+  if(a==='teamstats'){S.teamStats=true;render();return}
+  if(a==='closestats'){S.teamStats=false;render();return}
   if(a==='askfix'){sheet('<h3>Pedir un ajuste</h3><div class="sub">Cuéntale a tu empleador qué dato está malo y cuál es el correcto.</div><form id="ffix"><label for="fxt">¿Qué hay que corregir?</label><textarea id="fxt" required placeholder="Ej: mi número de cuenta es 12345678"></textarea><div class="opts"><button class="btn pri" type="submit">Enviar</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
   if(a==='wlogout'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">'+(S.mode==='cloud'?'Este teléfono dejará de estar conectado. Para volver a entrar necesitarás un link nuevo de tu empleador (en tu ficha: «Invitar a la app» → «Crear link nuevo»).':'Este teléfono dejará de estar conectado a esta persona.')+'</div><div class="opts"><button class="btn on-a" data-a="wlogoutok">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}
   if(a==='wlogoutok'){close();if(S.mode==='cloud'){try{sb&&sb.auth.signOut()}catch(e){}me=null;resetSync();const pin=S.pin;S=blankState();S.pin=pin}else{S.device=null;S.role=null;S.wid=null;S.tab='home'}tour=null;render();return}
@@ -1245,7 +1247,7 @@ app.addEventListener('click',async e=>{
   if(a==='trydevok'){const err=redeem(W(v).invite.token);close();if(err){toast(err);return}render();return}
   if(a==='switch'){sheet('<h3>Cambiar de usuario</h3><div class="sub">En el prototipo puedes probar las dos vistas en este mismo teléfono.</div><div class="opts"><button class="btn pri" data-a="role" data-v="emp">Ver como empleador</button>'+(active().length>1?'<button class="btn" data-a="role" data-v="wor">Entrar como otro trabajador</button>':'')+'<button class="btn" data-a="out">Volver al inicio</button><button class="btn" data-a="close">Cancelar</button></div>');return}
   if(a==='pickw'){S.wid=v;S.tab='home';render();return}
-  if(a==='tab'){S.tab=v;S.detail=null;S.mk=MK;render();return}
+  if(a==='tab'){S.tab=v;S.detail=null;S.teamStats=false;S.mk=MK;render();return}
   if(a==='open'){S.detail=v;S.sub='asis';S.mk=MK;finDraft={};render();return}
   if(a==='goto'){const[id,sub]=v.split('|');S.detail=id;S.sub=sub;S.mk=MK;S.tab='team';render();return}
   if(a==='closedetail'){S.detail=null;render();return}
