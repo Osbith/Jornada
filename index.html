@@ -621,6 +621,7 @@ function vEmpSettings(){
   h+='<h2>Respaldo</h2><div class="card"><div class="sub">Guarda una copia de todos los datos'+(S.lastBackup?' · último respaldo: '+fmtD(S.lastBackup):'')+'.</div><button class="btn pri full" style="margin-top:12px" data-a="backupdl">Descargar respaldo</button><div class="seg"><button class="btn" data-a="backup">Copiar respaldo</button><button class="btn" data-a="restore">Restaurar</button></div></div>';
   if(S.mode==='cloud'){const q=Object.keys(sync.queue).length;
     h+='<h2>Tu cuenta</h2><div class="card"><div class="name">'+esc(me&&me.email||S.emp.email||'Cuenta de empleador')+'</div><div class="sub">'+(sync.err?'<span style="color:var(--a)">No se pudo sincronizar: '+esc(sync.err)+'</span>':q?q+' cambio'+(q>1?'s':'')+' por enviar':'Todo guardado en la nube')+(sync.lastPull?' · revisado '+new Date(sync.lastPull).toTimeString().slice(0,5):'')+'</div><div class="seg"><button class="btn" data-a="syncnow">Sincronizar</button><button class="btn" data-a="pwform">Cambiar clave</button></div><button class="btn full" style="margin-top:8px" data-a="out">Cerrar sesión</button></div>';
+    const ad=S.admins||[];h+='<h2>Administradores</h2>'+(ad.length?'<div class="card lines">'+ad.map(x=>'<div><span>'+esc(x.name||x.email||'Administrador')+(x.user_id===me.uid?' (tú)':'')+'</span><b style="white-space:normal">'+esc(x.name?x.email:'')+'</b></div>').join('')+'</div>':'')+'<div class="card"><div class="sub">Todos los administradores tienen los mismos permisos. Nadie puede quitar a otro desde la app.</div><button class="btn pri full" style="margin-top:12px" data-a="invadmin">Invitar administrador</button></div>';
     h+='<h2>Datos de prueba</h2><div class="card"><div class="sub">Para probar la app con ejemplos (casa, jardinera y una cuadrilla). Después puedes borrarlos.</div><div class="seg"><button class="btn" data-a="loaddemo">Cargar ejemplos</button><button class="btn" data-a="wipe">Borrar todo</button></div></div>';}
   else h+='<h2>Modo de prueba</h2><div class="card"><div class="sub">Estás usando datos de ejemplo guardados solo en este teléfono. Para probar la vista de un trabajador: Equipo → la persona → Ficha → «Invitar a la app» → «Probar en este teléfono».</div><div class="opts"><button class="btn full" data-a="reset">Reiniciar datos de ejemplo</button><button class="btn full" data-a="out">Salir del modo de prueba</button></div></div>';
   return h;
@@ -842,8 +843,8 @@ function joinScreen(){
   '<div class="card" style="background:#fff;color:var(--sunink)"><form id="fjoin"><label for="jc">¿Te dieron un código?</label><input id="jc" autocomplete="off" autocapitalize="off" placeholder="Ej: jmaria4821x" style="background:#fff;color:#15161a">'+(joinErr?'<div class="err">'+esc(joinErr)+'</div>':'')+'<button class="btn dark full" style="margin-top:12px" type="submit"'+(joinBusy?' disabled':'')+'>'+(joinBusy?'Activando tu app…':'Entrar')+'</button></form></div>'+
   '<div class="fine">Cada link sirve una sola vez y deja este teléfono conectado solo a ti.</div></div>';
 }
-function authScreen(){return '<div class="welcome"><button class="back" data-a="out" aria-label="Volver">'+svg('l')+'</button><h1 style="font-size:38px">'+(authMode==='up'?'Crea tu cuenta':'Entra a tu cuenta')+'</h1><p>'+(authMode==='up'?'Con tu correo y una clave. Tus datos quedan respaldados y puedes entrar desde otro teléfono.':'Usa el correo y la clave con que creaste tu cuenta.')+'</p><div style="flex:1;min-height:24px"></div>'+
-  '<div class="card" style="background:#fff;color:#15161a"><form id="fauth"><label for="ae">Correo</label><input id="ae" type="email" autocomplete="email" required value="'+esc(authEmail)+'" style="background:#fff;color:#15161a"><label for="ap">Clave</label><input id="ap" type="password" autocomplete="'+(authMode==='up'?'new-password':'current-password')+'" minlength="6" required style="background:#fff;color:#15161a">'+(authErr?'<div class="err">'+esc(authErr)+'</div>':'')+'<button class="btn dark full" style="margin-top:12px" type="submit"'+(authBusy?' disabled':'')+'>'+(authBusy?'Un momento…':authMode==='up'?'Crear cuenta':'Entrar')+'</button></form>'+
+function authScreen(){return '<div class="welcome"><button class="back" data-a="out" aria-label="Volver">'+svg('l')+'</button><h1 style="font-size:38px">'+(adminJoin?'Te invitaron a administrar':authMode==='up'?'Crea tu cuenta':'Entra a tu cuenta')+'</h1><p>'+(adminJoin?'Vas a administrar el mismo equipo, con los mismos permisos. '+(authMode==='up'?'Crea tu cuenta con tu correo y una clave.':'Entra con tu correo y tu clave.'):authMode==='up'?'Con tu correo y una clave. Tus datos quedan respaldados y puedes entrar desde otro teléfono.':'Usa el correo y la clave con que creaste tu cuenta.')+'</p><div style="flex:1;min-height:24px"></div>'+
+  '<div class="card" style="background:#fff;color:#15161a"><form id="fauth">'+(authMode==='up'?'<label for="an">Tu nombre</label><input id="an" autocomplete="name" required value="'+esc(authName)+'" style="background:#fff;color:#15161a">':'')+'<label for="ae">Correo</label><input id="ae" type="email" autocomplete="email" required value="'+esc(authEmail)+'" style="background:#fff;color:#15161a"><label for="ap">Clave</label><input id="ap" type="password" autocomplete="'+(authMode==='up'?'new-password':'current-password')+'" minlength="6" required style="background:#fff;color:#15161a">'+(authErr?'<div class="err">'+esc(authErr)+'</div>':'')+'<button class="btn dark full" style="margin-top:12px" type="submit"'+(authBusy?' disabled':'')+'>'+(authBusy?'Un momento…':authMode==='up'?'Crear cuenta':'Entrar')+'</button></form>'+
   '<button class="btn full" style="margin-top:8px;background:transparent;box-shadow:none;color:#15161a" data-a="authmode">'+(authMode==='up'?'Ya tengo cuenta: entrar':'No tengo cuenta: crear una')+'</button></div><div class="fine">'+(PREVIEW?'En esta vista previa las cuentas no se conectan a la nube. Usa la app publicada.':'La clave debe tener al menos 6 caracteres.')+'</div></div>'}
 const TOURS={
   e:()=>[
@@ -963,7 +964,7 @@ const money=v=>parseInt(String(v||'').replace(/\D/g,''),10)||0;
 async function copy(t,ok){try{await navigator.clipboard.writeText(t);toast(ok||'Copiado')}catch(e){sheet('<h3>Copia este texto</h3><textarea style="min-height:240px" readonly>'+esc(t)+'</textarea><div class="opts"><button class="btn" data-a="close">Listo</button></div>')}}
 
 function applyDay(){const{id,s,rec}=pendDay,w=W(id),prev=S.att[id][s];if(s<TODAY)rec.edited=TODAY;if((prev&&prev.extra)||(!works(w,s)&&rec.s==='P'))rec.extra=true;S.att[id][s]=rec;
-  const txt=(prev?'cambió':'marcó')+' el día: '+ST[rec.s].t.toLowerCase()+(rec.ot?' · '+rec.ot+' h extra':'');log(id,s,'Empleador '+txt+(s<TODAY?' (día pasado)':'')+(!works(w,s)?' (fuera de jornada)':''));
+  const txt=(prev?'cambió':'marcó')+' el día: '+ST[rec.s].t.toLowerCase()+(rec.ot?' · '+rec.ot+' h extra':'');log(id,s,actor()+' '+txt+(s<TODAY?' (día pasado)':'')+(!works(w,s)?' (fuera de jornada)':''));
   if(s<TODAY||!works(w,s))S.msgs.push({id:uid('m'),wid:id,from:'e',text:'Modifiqué tu registro del '+fmtD(s)+': quedó como '+ST[rec.s].t.toLowerCase()+(rec.ot?' con '+rec.ot+' h extra':'')+'. Si algo no te parece, avísame.',date:TODAY,t:now(),read:false,auto:true});
   pendDay=null;close();render(true);toast('Día guardado')}
 
@@ -1078,7 +1079,8 @@ function plAdd(lat,lng){const ni=document.getElementById('pln'),nm=ni?ni.value.t
 const SB_URL='https://nghyhiwyurxbprpvssrj.supabase.co',SB_KEY='sb_publishable_OxMY1TvECM24ldjFa2d3ig_mFgwuCGL',SKEY='jornada_sync_v1';
 const PREVIEW=/claudeusercontent|claude\.ai/.test(location.hostname);
 const GEN=['attendance','checkins','payments','docs','messages','notifs','logs'];
-let sb=null,sbLoading=null,me=null,sync=null,syncBusy=false,syncTimer=null,needRender=false,firstPull=true,joinBusy=false,authMode='in',authErr='',authBusy=false,authEmail='';
+let sb=null,sbLoading=null,me=null,sync=null,syncBusy=false,syncTimer=null,needRender=false,firstPull=true,joinBusy=false,authMode='in',authErr='',authBusy=false,authEmail='',authName='',adminJoin=null,admBlock=false;
+function actor(){try{if(S.mode!=='cloud'||!me||me.kind!=='emp'||!(S.admins&&S.admins.length>1))return 'Empleador';const a=S.admins.find(x=>x.user_id===me.uid);const n=String(me.name||a&&a.name||'').trim();return n?n.split(/\s+/)[0]:String(me.email||'Empleador').split('@')[0]}catch(e){return 'Empleador'}}
 const seenN=new Set();
 function resetSync(){sync={ready:false,synced:{},queue:{},since:{},lastPull:0,lastKeys:0,err:''};saveSync()}
 function saveSync(){try{localStorage.setItem(SKEY,JSON.stringify({me,sync}))}catch(e){}}
@@ -1086,14 +1088,14 @@ try{const x=JSON.parse(localStorage.getItem(SKEY));if(x){me=x.me||null;sync=x.sy
 if(!sync)sync={ready:false,synced:{},queue:{},since:{},lastPull:0,lastKeys:0,err:''};
 function canon(o){if(o===null||typeof o!=='object')return JSON.stringify(o===undefined?null:o);if(Array.isArray(o))return '['+o.map(canon).join(',')+']';return '{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canon(o[k])).join(',')+'}'}
 function hash(str){let a=0xdeadbeef,b=0x41c6ce57;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return(b>>>0).toString(36)+(a>>>0).toString(36)}
-const EID=()=>me?(me.kind==='emp'?me.uid:me.empId):null;
+const EID=()=>me?(me.kind==='emp'?(me.team||me.uid):me.empId):null;
 const PUSH=()=>me&&me.kind==='emp'?['employers','workers',...GEN]:['attendance','checkins','payments','messages','notifs','logs'];
 function bootSb(){if(sb)return Promise.resolve(sb);if(sbLoading)return sbLoading;
   sbLoading=new Promise(res=>{const done=()=>{try{if(!sb&&window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'jornada_auth'}})}catch(e){sb=null}sbLoading=null;res(sb)};
     if(window.supabase)return done();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';sc.onload=done;sc.onerror=done;document.head.appendChild(sc)});
   return sbLoading}
 function rowsFromS(){const E=EID(),R={};const add=(t,k,row)=>{(R[t]||(R[t]={}))[k]=row};const P=PUSH();
-  if(P.includes('employers')){add('employers',me.uid,{id:me.uid,data:{emp:S.emp,strict:S.strict}});
+  if(P.includes('employers')){add('employers',E,{id:E,data:{emp:S.emp,strict:S.strict}});
     for(const w of S.workers){const d=Object.assign({},w);delete d.id;delete d.invite;add('workers',w.id,{employer_id:E,id:w.id,invite_token:w.invite&&w.invite.token||null,crew_id:w.role==='miembro'&&w.crew?w.crew:null,data:d})}}
   for(const wid in S.att)for(const d in S.att[wid])add('attendance',wid+'|'+d,{employer_id:E,id:wid+'|'+d,worker_id:wid,data:S.att[wid][d]});
   for(const wid in S.ck)for(const d in S.ck[wid])add('checkins',wid+'|'+d,{employer_id:E,id:wid+'|'+d,worker_id:wid,data:S.ck[wid][d]});
@@ -1121,7 +1123,7 @@ async function flushQueue(){const items=Object.entries(sync.queue);if(!items.len
 function localKeys(t){if(t==='workers')return S.workers.map(w=>w.id);if(t==='attendance'||t==='checkins'){const o=t==='attendance'?S.att:S.ck,l=[];for(const w in o)for(const d in o[w])l.push(w+'|'+d);return l}
   return S[{payments:'pays',docs:'docs',messages:'msgs',notifs:'notifs',logs:'log'}[t]].map(x=>x.id)}
 function applyRow(t,r){
-  if(t==='employers'){if(me.kind==='emp'&&r.id!==me.uid)return;const d=r.data||{};if(d.emp)S.emp=Object.assign({},S.emp,d.emp);if('strict' in d)S.strict=d.strict;return}
+  if(t==='employers'){if(r.id!==EID())return;const d=r.data||{};if(d.emp)S.emp=Object.assign({},S.emp,d.emp);if('strict' in d)S.strict=d.strict;return}
   if(t==='workers'){const w=Object.assign({},r.data,{id:r.id,invite:r.invite_token?{token:r.invite_token,used:r.invite_used?String(r.invite_used).slice(0,10):null}:null});const i=S.workers.findIndex(x=>x.id===r.id);if(i>=0)S.workers[i]=w;else S.workers.push(w);S.att[r.id]=S.att[r.id]||{};S.ck[r.id]=S.ck[r.id]||{};return}
   if(t==='attendance'||t==='checkins'){const j=r.id.lastIndexOf('|'),wid=r.id.slice(0,j),d=r.id.slice(j+1),o=t==='attendance'?S.att:S.ck;(o[wid]||(o[wid]={}))[d]=r.data;return}
   const key={payments:'pays',docs:'docs',messages:'msgs',notifs:'notifs',logs:'log'}[t],x=Object.assign({},r.data,{id:r.id}),L=S[key],i=L.findIndex(y=>y.id===r.id);if(i>=0)L[i]=x;else L.push(x);
@@ -1132,20 +1134,24 @@ function removeKey(t,k){if(t==='workers'){S.workers=S.workers.filter(w=>w.id!==k
 function sortLists(){S.msgs.sort((a,b)=>(a.date+a.t).localeCompare(b.date+b.t));S.notifs.sort((a,b)=>(b.date+b.t).localeCompare(a.date+a.t));S.notifs=S.notifs.slice(0,300)}
 async function pull(full){
   const tabs=['employers','workers',...GEN];let changed=false;const applied={};
-  const res=await Promise.all(tabs.map(t=>{let q=sb.from(t).select('*');const since=!full&&sync.since[t];if(since)q=q.gt('updated_at',since);return q.limit(10000)}));
+  const res=await Promise.all(tabs.map(t=>{let q=sb.from(t).select('*').eq(t==='employers'?'id':'employer_id',EID());const since=!full&&sync.since[t];if(since)q=q.gt('updated_at',since);return q.limit(10000)}));
   for(let i=0;i<tabs.length;i++){const t=tabs[i],r=res[i];if(r.error)throw r.error;
     for(const row of r.data||[]){if(!sync.since[t]||row.updated_at>sync.since[t])sync.since[t]=row.updated_at;if(sync.queue[t+'|'+row.id])continue;applyRow(t,row);changed=true;(applied[t]||(applied[t]=[])).push(row.id)}}
   if(full||Date.now()-sync.lastKeys>120000){
     computeDiff();
-    const kr=await Promise.all(tabs.slice(1).map(t=>sb.from(t).select('id').limit(20000)));
+    const kr=await Promise.all(tabs.slice(1).map(t=>sb.from(t).select('id').eq('employer_id',EID()).limit(20000)));
     for(let i=0;i<kr.length;i++){const t=tabs[i+1],r=kr[i];if(r.error)throw r.error;const set=new Set((r.data||[]).map(x=>x.id));
       for(const k of localKeys(t))if(!set.has(k)&&!sync.queue[t+'|'+k]){removeKey(t,k);if(sync.synced[t])delete sync.synced[t][k];changed=true}}
-    sync.lastKeys=Date.now()}
+    sync.lastKeys=Date.now();
+    if(me.kind==='emp'&&await pullAdmins())changed=true}
   if(changed){sortLists();const R=rowsFromS();for(const t in applied)if(R[t])for(const k of applied[t])if(R[t][k])(sync.synced[t]||(sync.synced[t]={}))[k]=hash(canon(R[t][k]))}
   for(const wid in S.ck)for(const d in S.ck[wid])for(const k of['in','out']){const c=S.ck[wid][d][k];if(c&&c.ins===undefined&&W(wid)){c.wid=c.wid||wid;stamp(c)}}
   firstPull=false;
   if(me.kind==='wor'&&sync.ready&&!W(me.wid)){revoke('Tu empleador renovó tu acceso. Abre el link nuevo que te envió.');return false}
   return changed}
+async function pullAdmins(){try{const r=await sb.from('employer_members').select('user_id,name,email,added_at').eq('employer_id',EID()).order('added_at');if(r.error)return false;let list=r.data||[];
+    if(!list.some(x=>x.user_id===me.uid)){const nm=me.name||(!me.team&&S.emp.name)||null;const u=await sb.from('employer_members').upsert({employer_id:EID(),user_id:me.uid,name:nm,email:me.email||null},{onConflict:'employer_id,user_id'});if(!u.error)list=list.concat([{user_id:me.uid,name:nm,email:me.email||null}])}
+    const before=JSON.stringify(S.admins||[]);S.admins=list.map(x=>({user_id:x.user_id,name:x.name||'',email:x.email||''}));return JSON.stringify(S.admins)!==before}catch(e){return false}}
 function markOutboxSent(){const p=S.outbox.filter(o=>!o.sent);if(!p.length)return;for(const o of p){o.sent=true;const r=S.ck[o.wid]&&S.ck[o.wid][o.date];const k=o.kind==='out'||o.kind==='crewout'?'out':'in';if(r&&r[k])r[k].rcv=now()}toast(p.length===1?'Se envió la marca guardada':'Se enviaron '+p.length+' marcas guardadas')}
 function refreshView(){const sh=app.querySelector('.shade.open'),ae=document.activeElement;if(sh||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)&&app.contains(ae)))needRender=true;else render(true)}
 async function syncNow(o){o=o||{};if(S.mode!=='cloud'||!me||syncBusy)return;await bootSb();if(!sb)return;if(!navigator.onLine){sync.err='Sin conexión';return}
@@ -1161,13 +1167,16 @@ async function syncNow(o){o=o||{};if(S.mode!=='cloud'||!me||syncBusy)return;awai
   if(changed){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}refreshView()}}
 function revoke(msg){S.device=null;S.role='join';S.wid=null;S.workers=[];joinErr=msg;me=null;resetSync();try{sb&&sb.auth.signOut()}catch(e){}tour=null;render()}
 const authMsg=m=>/invalid login/i.test(m)?'Correo o clave incorrectos.':/already registered|already been registered/i.test(m)?'Ese correo ya tiene cuenta. Toca «Ya tengo cuenta: entrar».':/at least 6/i.test(m)?'La clave debe tener al menos 6 caracteres.':/not confirmed/i.test(m)?'Falta confirmar el correo: revisa tu bandeja de entrada.':/rate limit|too many/i.test(m)?'Demasiados intentos. Espera un momento.':netErr(m)?'No hay conexión. Revisa tu internet.':m;
-async function empLogin(email,pass,up){
+async function empLogin(email,pass,up,name){
   await bootSb();if(!sb)return PREVIEW?'En la vista previa no hay conexión con la nube. Usa la app publicada o el modo de prueba.':'No hay conexión. Necesitas internet para entrar la primera vez.';
   try{const cur=(await sb.auth.getSession()).data.session;if(cur&&cur.user&&cur.user.is_anonymous)return 'Este teléfono está conectado como trabajador(a). Usa otro teléfono para la cuenta de empleador.';
     const r=up?await sb.auth.signUp({email,password:pass}):await sb.auth.signInWithPassword({email,password:pass});
     if(r.error)return authMsg(r.error.message||'');
     if(!r.data.session)return 'Te enviamos un correo para confirmar tu cuenta. Confírmalo y vuelve a entrar.';
-    const pin=S.pin;S=blankState();S.mode='cloud';S.role='emp';S.pin=pin;S.emp.email=email;me={uid:r.data.user.id,kind:'emp',email};resetSync();locked=false;
+    if(adminJoin){const x=await sb.rpc('redeem_admin',{tok:adminJoin,nm:name||''});if(x.error){const m=x.error.message||'';if(!/own/.test(m)){adminJoin=null;try{await sb.auth.signOut()}catch(e){}
+      return /has_team/.test(m)?'Esta cuenta ya tiene sus propios trabajadores, así que no se puede sumar a otro equipo. Crea una cuenta nueva con otro correo.':/used/.test(m)?'Este link de administrador ya se usó. Pide uno nuevo.':/invalid/.test(m)?'Ese link de administrador no es válido. Pide uno nuevo.':/other_team/.test(m)?'Esta cuenta ya administra otro equipo.':/anon/.test(m)?'Este teléfono está conectado como trabajador(a).':/redeem_admin|schema cache|does not exist|function/i.test(m)?'Falta activar los administradores en Supabase.':authMsg(m)}}adminJoin=null}
+    let team=null;try{const t=await sb.rpc('my_team');if(!t.error&&t.data&&t.data!==r.data.user.id)team=t.data}catch(e){}
+    const pin=S.pin;S=blankState();S.mode='cloud';S.role='emp';S.pin=pin;if(!team)S.emp.email=email;me={uid:r.data.user.id,kind:'emp',email,team,name:String(name||'').trim()||null};resetSync();locked=false;
     await syncNow({pull:true});if(sync.err&&!sync.ready)return 'Entraste, pero no se pudieron cargar tus datos: '+sync.err;return null}
   catch(e){return authMsg(String(e&&e.message||e))}}
 async function redeemCloud(tok){tok=String(tok||'').trim().replace(/^.*#inv-/,'').toLowerCase();if(!tok)return 'Escribe el código que te mandaron.';
@@ -1200,7 +1209,7 @@ app.addEventListener('click',async e=>{
   const a=b.dataset.a,v=b.dataset.v;
   if(a==='role'){if(S.device)return;S.role=v;S.tab='home';S.detail=null;S.mk=MK;locked=v==='emp'&&!!S.pin;pinBuf='';render();return}
   if(a==='join'){S.role='join';joinErr='';render();return}
-  if(a==='out'){if(S.device)return;if(S.mode==='cloud'&&me&&me.kind==='emp'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">Tus datos quedan guardados en la nube. Para volver a entrar necesitas tu correo y tu clave.</div><div class="opts"><button class="btn on-a" data-a="logout">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}if(S.role==='emp'&&S.mode==='demo'){S=blankState();render();return}S.role=null;S.wid=null;S.detail=null;authErr='';render();return}
+  if(a==='out'){if(S.device)return;if(S.role==='auth')adminJoin=null;if(S.mode==='cloud'&&me&&me.kind==='emp'){sheet('<h3>¿Cerrar sesión?</h3><div class="sub">Tus datos quedan guardados en la nube. Para volver a entrar necesitas tu correo y tu clave.</div><div class="opts"><button class="btn on-a" data-a="logout">Cerrar sesión</button><button class="btn" data-a="close">Cancelar</button></div>');return}if(S.role==='emp'&&S.mode==='demo'){S=blankState();render();return}S.role=null;S.wid=null;S.detail=null;authErr='';render();return}
   if(a==='pwform'){sheet('<h3>Cambiar clave</h3><div class="sub">Elige una clave que recuerdes, de al menos 6 caracteres.</div><form id="fpw"><label for="np1">Clave nueva</label><input id="np1" type="password" autocomplete="new-password" minlength="6" required><label for="np2">Repite la clave nueva</label><input id="np2" type="password" autocomplete="new-password" minlength="6" required><div id="pwerr"></div><div class="opts"><button class="btn pri" type="submit">Guardar clave</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
   if(a==='statp'){S.statP=v;render(true);return}
   if(a==='teamstats'){S.teamStats=true;render();return}
@@ -1240,9 +1249,12 @@ app.addEventListener('click',async e=>{
   if(a==='plhere'){try{navigator.geolocation.getCurrentPosition(p=>plAdd(p.coords.latitude,p.coords.longitude),()=>toast('No se pudo leer tu ubicación aquí. En la app publicada sí funciona.'),{enableHighAccuracy:true,timeout:15000})}catch(err){toast('Ubicación no disponible aquí')}return}
   if(a==='plfinish'){if(plArea.length<3){toast('Marca al menos 3 esquinas');return}const nm=(app.querySelector('#pln').value||'').trim();plDraft.places.push({type:'area',name:nm||'Área '+(plDraft.places.length+1),pts:plArea.slice()});plArea=[];app.querySelector('#pln').value='';drawPlLayers();drawPlList();toast('Área agregada');return}
   if(a==='pldel'){plDraft.places.splice(+v,1);drawPlLayers();drawPlList();return}
-  if(a==='plsave'){if(!plDraft.places.length){toast('Agrega al menos un lugar');return}const w=W(plDraft.wid);w.w.places=plDraft.places;if(w.role==='capataz')crewOf(w.id).forEach(m=>m.w.places=JSON.parse(JSON.stringify(plDraft.places)));log(w.id,TODAY,'Empleador cambió el lugar de trabajo');close();render(true);toast('Lugar de trabajo guardado');return}
+  if(a==='plsave'){if(!plDraft.places.length){toast('Agrega al menos un lugar');return}const w=W(plDraft.wid);w.w.places=plDraft.places;if(w.role==='capataz')crewOf(w.id).forEach(m=>m.w.places=JSON.parse(JSON.stringify(plDraft.places)));log(w.id,TODAY,actor()+' cambió el lugar de trabajo');close();render(true);toast('Lugar de trabajo guardado');return}
   if(a==='copylink'){copy(v,'Link copiado');return}
-  if(a==='newlink'){const w=W(v);const was=w.invite&&w.invite.used;w.invite={token:newTok(),created:TODAY,used:null};log(w.id,TODAY,'Empleador creó un link nuevo'+(was?' (se anuló el acceso del teléfono anterior)':''));save();inviteSheet(v);toast(was?'Link nuevo creado. El teléfono anterior quedó desconectado':'Link nuevo creado');return}
+  if(a==='invadmin'){await bootSb();if(!sb||!navigator.onLine){toast('Necesitas internet para crear el link');return}const tok=newTok();let r;try{r=await sb.from('admin_invites').insert({token:tok,employer_id:EID()})}catch(e){r={error:e}}
+    if(r.error){const m=String(r.error.message||r.error);toast(/admin_invites|schema cache|does not exist/i.test(m)?'Falta activar los administradores en Supabase':'No se pudo crear el link: '+m);return}
+    const link=location.href.split('#')[0]+'#adm-'+tok;sheet('<h3>Invitar administrador</h3><div class="sub">Envía este link a la persona. Al abrirlo crea su cuenta con su correo y una clave, y queda como administrador con los mismos permisos que tú. El link sirve una sola vez. Nadie puede quitar a otro administrador desde la app.</div><div class="linkbox">'+esc(link)+'</div><div class="opts"><a class="btn pri" href="https://wa.me/?text='+encodeURIComponent('Te invito a administrar Jornada conmigo. Abre este link (sirve una sola vez): '+link)+'" target="_blank" rel="noopener">Enviar por WhatsApp</a><button class="btn" data-a="copylink" data-v="'+esc(link)+'">Copiar link</button><button class="btn" data-a="close">Listo</button></div>');return}
+  if(a==='newlink'){const w=W(v);const was=w.invite&&w.invite.used;w.invite={token:newTok(),created:TODAY,used:null};log(w.id,TODAY,actor()+' creó un link nuevo'+(was?' (se anuló el acceso del teléfono anterior)':''));save();inviteSheet(v);toast(was?'Link nuevo creado. El teléfono anterior quedó desconectado':'Link nuevo creado');return}
   if(a==='trydev'){const w=W(v);sheet('<h3>Probar como '+esc(first(w))+'</h3><div class="sub">Este teléfono quedará conectado como el de '+esc(first(w))+', igual que en la app real: sin poder cambiar de persona.</div><div class="warnbox">'+svg('warn',20)+'<span>Para volver al modo empleador (solo en el prototipo), toca 5 veces la fecha que aparece arriba.</span></div><div class="opts"><button class="btn pri" data-a="trydevok" data-v="'+v+'">Sí, probar</button><button class="btn" data-a="close">Cancelar</button></div>');return}
   if(a==='trydevok'){const err=redeem(W(v).invite.token);close();if(err){toast(err);return}render();return}
   if(a==='switch'){sheet('<h3>Cambiar de usuario</h3><div class="sub">En el prototipo puedes probar las dos vistas en este mismo teléfono.</div><div class="opts"><button class="btn pri" data-a="role" data-v="emp">Ver como empleador</button>'+(active().length>1?'<button class="btn" data-a="role" data-v="wor">Entrar como otro trabajador</button>':'')+'<button class="btn" data-a="out">Volver al inicio</button><button class="btn" data-a="close">Cancelar</button></div>');return}
@@ -1259,16 +1271,16 @@ app.addEventListener('click',async e=>{
   if(a==='close'){close();return}
   if(a==='dismiss'){S.dismissed.push(v);render(true);return}
   if(a==='mark'&&!works(W(v.split('|')[0]),TODAY)&&!b.dataset.ok){const id=v.split('|')[0];sheet('<h3>Hoy no le toca a '+esc(first(W(id)))+'</h3>'+warnHtml(dayWarns(W(id),TODAY))+'<div class="opts"><button class="btn pri" data-a="mark" data-v="'+v+'" data-ok="1">Marcar igual</button><button class="btn" data-a="close">Cancelar</button></div>');return}
-  if(a==='mark'){close();const[id,k]=v.split('|'),cur=S.att[id][TODAY];if(cur&&cur.s===k)delete S.att[id][TODAY];else S.att[id][TODAY]=Object.assign({ot:0,note:''},cur,{s:k},!works(W(id),TODAY)&&k==='P'?{extra:true}:{});log(id,TODAY,'Empleador marcó '+(S.att[id][TODAY]?ST[k].t.toLowerCase():'sin marca'));render(true);toast(S.att[id][TODAY]?first(W(id))+': '+ST[k].t:'Marca quitada');return}
-  if(a==='validate'){S.att[v][TODAY]=Object.assign({ot:0,note:''},S.att[v][TODAY],{s:'P'});log(v,TODAY,'Empleador confirmó presente');render(true);toast(first(W(v))+' quedó presente');return}
-  if(a==='accept'){const c=S.ck[v][TODAY].in;c.st='acc';c.dec=now();S.att[v][TODAY]=Object.assign({ot:0,note:''},S.att[v][TODAY],{s:'P'},c.extra?{extra:true}:{});log(v,TODAY,'Empleador aceptó la llegada'+(c.extra?' (día extra)':' fuera del lugar'));notify(v,'Tu empleador aceptó tu llegada de las '+c.t+'.');render(true);toast('Aceptado: '+first(W(v))+' quedó presente');return}
+  if(a==='mark'){close();const[id,k]=v.split('|'),cur=S.att[id][TODAY];if(cur&&cur.s===k)delete S.att[id][TODAY];else S.att[id][TODAY]=Object.assign({ot:0,note:''},cur,{s:k},!works(W(id),TODAY)&&k==='P'?{extra:true}:{});log(id,TODAY,actor()+' marcó '+(S.att[id][TODAY]?ST[k].t.toLowerCase():'sin marca'));render(true);toast(S.att[id][TODAY]?first(W(id))+': '+ST[k].t:'Marca quitada');return}
+  if(a==='validate'){S.att[v][TODAY]=Object.assign({ot:0,note:''},S.att[v][TODAY],{s:'P'});log(v,TODAY,actor()+' confirmó presente');render(true);toast(first(W(v))+' quedó presente');return}
+  if(a==='accept'){const c=S.ck[v][TODAY].in;c.st='acc';c.dec=now();S.att[v][TODAY]=Object.assign({ot:0,note:''},S.att[v][TODAY],{s:'P'},c.extra?{extra:true}:{});log(v,TODAY,actor()+' aceptó la llegada'+(c.extra?' (día extra)':' fuera del lugar'));notify(v,'Tu empleador aceptó tu llegada de las '+c.t+'.');render(true);toast('Aceptado: '+first(W(v))+' quedó presente');return}
   if(a==='reject'){const w=W(v);sheet('<h3>Rechazar llegada de '+esc(first(w))+'</h3><form id="fj" data-w="'+v+'"><label>¿Cómo queda el día?</label><div class="opts" style="margin-top:0"><label class="radio"><input type="radio" name="jo" value="R" checked><span><b>Pedir que marque de nuevo</b><br>Podrá marcar otra vez cuando esté en la casa.</span></label><label class="radio"><input type="radio" name="jo" value="A"><span><b>Marcar ausente</b><br>El día se descuenta. Úsalo solo si no vino a trabajar.</span></label></div><label for="jn">Mensaje para '+esc(first(w))+' (opcional)</label><textarea id="jn" placeholder="Ej: necesito que marques al llegar a la casa"></textarea><div class="opts"><button class="btn on-a" type="submit">Rechazar llegada</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
-  if(a==='addot'){const[id,h]=v.split('|');S.att[id][TODAY]=Object.assign({s:'P',note:''},S.att[id][TODAY],{ot:+h});log(id,TODAY,'Empleador sumó '+h+' h extra');render(true);toast('Se sumaron '+h+' h extra');return}
+  if(a==='addot'){const[id,h]=v.split('|');S.att[id][TODAY]=Object.assign({s:'P',note:''},S.att[id][TODAY],{ot:+h});log(id,TODAY,actor()+' sumó '+h+' h extra');render(true);toast('Se sumaron '+h+' h extra');return}
   if(a==='pickst'){b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');app.querySelector('#ds').value=v;return}
   if(a==='ot'){const el=app.querySelector('#dot');el.textContent=Math.max(0,Math.min(12,(+el.textContent)+ +v));return}
   if(a==='dayok'){applyDay();return}
   if(a==='dayback'){if(pendDay){const p=pendDay;dayEdit(p.id,p.s);const f=app.querySelector('#fday');f.querySelectorAll('.stsel button').forEach(x=>x.classList.toggle('on',x.dataset.v===p.rec.s));f.querySelector('#ds').value=p.rec.s;f.querySelector('#dot').textContent=p.rec.ot;f.querySelector('#dn2').value=p.rec.note}return}
-  if(a==='clearday'){const f=app.querySelector('#fday'),id=f.dataset.w,s=f.dataset.d;if(s<TODAY&&!b.dataset.ok){sheet('<h3>¿Quitar la marca de un día pasado?</h3>'+warnHtml(dayWarns(W(id),s))+'<form id="fday" data-w="'+id+'" data-d="'+s+'"></form><div class="opts"><button class="btn on-a" data-a="clearday" data-ok="1">Sí, quitar</button><button class="btn" data-a="close">Cancelar</button></div>');return}delete S.att[id][s];log(id,s,'Empleador quitó la marca del día');close();render(true);toast('Marca quitada');return}
+  if(a==='clearday'){const f=app.querySelector('#fday'),id=f.dataset.w,s=f.dataset.d;if(s<TODAY&&!b.dataset.ok){sheet('<h3>¿Quitar la marca de un día pasado?</h3>'+warnHtml(dayWarns(W(id),s))+'<form id="fday" data-w="'+id+'" data-d="'+s+'"></form><div class="opts"><button class="btn on-a" data-a="clearday" data-ok="1">Sí, quitar</button><button class="btn" data-a="close">Cancelar</button></div>');return}delete S.att[id][s];log(id,s,actor()+' quitó la marca del día');close();render(true);toast('Marca quitada');return}
   if(a==='tog'){b.classList.toggle('on');return}
   if(a==='strict'){S.strict=!S.strict;render(true);toast(S.strict?'Ahora deben estar en la casa para marcar':'Ahora pueden marcar fuera y tú decides');return}
   if(a==='hereloc'){try{navigator.geolocation.getCurrentPosition(p=>{const oLat=S.emp.lat,oLng=S.emp.lng;S.emp.lat=p.coords.latitude;S.emp.lng=p.coords.longitude;S.emp.homeSet=true;for(const w of S.workers)for(const pl of(w.w.places||[]))if(pl.type==='point'&&pl.lat===oLat&&pl.lng===oLng){pl.lat=S.emp.lat;pl.lng=S.emp.lng}render(true);toast('Listo: esta es la ubicación de tu casa')},()=>toast('No se pudo leer tu ubicación. Revisa que el teléfono dé permiso de ubicación a la app.'),{enableHighAccuracy:true,timeout:15000})}catch(err){toast('Ubicación no disponible aquí')}return}
@@ -1316,9 +1328,9 @@ app.addEventListener('submit',async e=>{
   if(f.id==='fpw'){const a1=q('np1').value,a2=q('np2').value,er=q('pwerr');if(a1.length<6){er.innerHTML='<div class="err">Debe tener al menos 6 caracteres.</div>';return}if(a1!==a2){er.innerHTML='<div class="err">Las claves no coinciden.</div>';return}
     await bootSb();if(!sb){er.innerHTML='<div class="err">Necesitas internet para cambiar la clave.</div>';return}
     try{const r=await sb.auth.updateUser({password:a1});if(r.error){const m=r.error.message||'';er.innerHTML='<div class="err">'+esc(/different from the old|same/i.test(m)?'La clave nueva debe ser distinta a la anterior.':/reauth|recent/i.test(m)?'Por seguridad, cierra sesión, vuelve a entrar y prueba de nuevo.':authMsg(m))+'</div>';return}close();toast('Clave cambiada')}catch(e){er.innerHTML='<div class="err">'+esc(authMsg(String(e&&e.message||e)))+'</div>'}return}
-  if(f.id==='fauth'){const em=val('ae'),pw=q('ap').value;authBusy=true;authErr='';authEmail=em;render();const err=await empLogin(em,pw,authMode==='up');authBusy=false;if(err){authErr=err;render();return}render();return}
+  if(f.id==='fauth'){const em=val('ae'),pw=q('ap').value,nm=q('an')?val('an'):'';authBusy=true;authErr='';authEmail=em;authName=nm;render();const err=await empLogin(em,pw,authMode==='up',nm);authBusy=false;if(err){authErr=err;render();return}render();return}
   if(f.id==='fday'){const id=f.dataset.w,s=f.dataset.d,st=val('ds');if(!st){toast('Elige cómo quedó el día');return}const rec={s:st,ot:+app.querySelector('#dot').textContent||0,note:val('dn2')};const ws=dayWarns(W(id),s);pendDay={id,s,rec};if(ws.length){sheet('<h3>¿Confirmas el cambio?</h3><div class="sub">'+esc(first(W(id)))+' · '+fmtD(s)+' → <b>'+ST[st].t+'</b>'+(rec.ot?' · '+rec.ot+' h extra':'')+'</div>'+warnHtml(ws)+'<div class="opts"><button class="btn pri" data-a="dayok">Sí, guardar el cambio</button><button class="btn" data-a="dayback">Volver a revisar</button></div>');return}applyDay();return}
-  if(f.id==='fj'){const id=f.dataset.w,o=f.querySelector('input[name=jo]:checked').value,c=S.ck[id][TODAY].in;c.st='rej';c.dec=now();c.out=o;c.note=val('jn');if(o==='A')S.att[id][TODAY]={s:'A',ot:0,note:'Llegada rechazada'};else delete S.att[id][TODAY];log(id,TODAY,'Empleador rechazó la llegada · '+(o==='A'?'marcado ausente':'pidió marcar de nuevo')+(c.note?' · “'+c.note+'”':''));notify(id,o==='A'?'Tu empleador no aceptó tu llegada y marcó el día como ausente.':'Tu empleador te pide marcar la llegada otra vez desde el lugar de trabajo.');close();render(true);toast('Llegada rechazada');return}
+  if(f.id==='fj'){const id=f.dataset.w,o=f.querySelector('input[name=jo]:checked').value,c=S.ck[id][TODAY].in;c.st='rej';c.dec=now();c.out=o;c.note=val('jn');if(o==='A')S.att[id][TODAY]={s:'A',ot:0,note:'Llegada rechazada'};else delete S.att[id][TODAY];log(id,TODAY,actor()+' rechazó la llegada · '+(o==='A'?'marcado ausente':'pidió marcar de nuevo')+(c.note?' · “'+c.note+'”':''));notify(id,o==='A'?'Tu empleador no aceptó tu llegada y marcó el día como ausente.':'Tu empleador te pide marcar la llegada otra vez desde el lugar de trabajo.');close();render(true);toast('Llegada rechazada');return}
   if(f.id==='fx'){const t=val('xr');if(!t){toast('Escribe el motivo o elige uno');return}sendEx(t);return}
   if(f.id==='fm'){const t=val('mt');if(!t)return;S.msgs.push({id:uid('m'),wid:S.wid,from:'w',text:t,date:TODAY,t:now(),read:false});render(true);toast('Mensaje enviado');return}
   if(f.id==='fm2'){const t=val('mt2'),id=f.dataset.w;if(!t)return;S.msgs.push({id:uid('m'),wid:id,from:'e',text:t,date:TODAY,t:now(),read:false});save();thread(id);toast('Mensaje enviado');return}
@@ -1354,16 +1366,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
 window.addEventListener('online',()=>{if(S.mode==='demo'&&S.outbox.some(o=>!o.sent))flush()});
 for(const wid in S.ck)for(const d in S.ck[wid])for(const k of['in','out']){const c=S.ck[wid][d][k];if(c&&c.ins===undefined&&W(wid)){c.wid=c.wid||wid;stamp(c)}}
 let pendingInvite=null;
+if(location.hash.indexOf('#adm-')===0){const tok=location.hash.slice(5);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){try{location.hash=''}catch(e2){}}
+  if(S.device||(S.mode==='cloud'&&me))admBlock=true;else{adminJoin=tok;S.role='auth';authMode='up';authErr=''}}
 if(location.hash.indexOf('#inv-')===0){const tok=location.hash.slice(5);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){try{location.hash=''}catch(e2){}}
   if(S.mode==='demo'){const err=redeem(tok);if(err){joinErr=err;if(!S.device)S.role='join'}}else if(!S.device){pendingInvite=tok;S.role='join';joinBusy=true}}
 if(S.mode==='demo'&&navigator.onLine&&S.outbox&&S.outbox.some(o=>!o.sent)){setTimeout(flush,1500)}
 window.addEventListener('online',()=>syncNow({pull:true}));
 render();
+if(admBlock)sheet('<h3>Link de administrador</h3><div class="sub">'+(S.device?'Este teléfono está conectado como trabajador(a). Abre el link en otro teléfono.':'Ya hay una cuenta abierta en este teléfono. Cierra sesión (Ajustes → Cerrar sesión) y vuelve a abrir el link.')+'</div><div class="opts"><button class="btn" data-a="close">Entendido</button></div>');
 bootCloud();
 }
 </script>
-<script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
-</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}</script>
 </body>
 </html>
