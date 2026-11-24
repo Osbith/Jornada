@@ -295,12 +295,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,Menlo
 .dwrap{position:relative;display:flex;gap:6px;align-items:stretch}.dwrap .dmv{flex:1;min-width:0}.dhide{position:absolute!important;opacity:0;pointer-events:none;width:1px!important;height:1px!important;left:8px;bottom:0;padding:0!important;border:0!important}[hidden]{display:none!important}.subtabs.one{display:flex;overflow-x:auto;scrollbar-width:none}.subtabs.one::-webkit-scrollbar{display:none}.subtabs.one button{flex:0 0 auto;white-space:nowrap;padding:0 14px;font-size:14px}.lines b{min-width:0;overflow-wrap:anywhere}.lnk{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:right;cursor:pointer;text-decoration:underline;text-decoration-color:rgb(0 0 0/.25);text-underline-offset:3px}.seg3 .btn{white-space:nowrap;min-width:0}.paybtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}.paybtns .btn:first-child{grid-column:1/-1}.dcal{flex:0 0 40px;border:1px solid rgb(0 0 0/.12);border-radius:12px;background:#fff;display:grid;place-items:center;color:inherit}
 
 /* ---------- versión para PC (empleador, pantallas anchas) ---------- */
-.grid2{display:contents}.tbl{display:none}
+.grid2{display:contents}.tbl{display:none}.whero,.wside{display:contents}
 @media(min-width:900px){
-#app.desk{max-width:1280px;flex-direction:row;height:calc(100% - 40px);margin-top:20px;border-radius:28px}
+#app.pc{max-width:1280px;height:calc(100% - 40px);margin-top:20px;border-radius:28px}#app.desk{flex-direction:row}
 #app.desk main{order:2;padding:0 36px 48px}
 #app.desk .top{margin:0 -36px 20px;padding:26px 36px 26px;border-radius:0 0 28px 0}
-#app.desk .nav{order:1;display:flex!important;flex-direction:column;width:232px;flex:0 0 232px;border-top:0;border-right:1px solid var(--line);padding:22px 14px;gap:4px;grid-template-columns:none!important}
+#app.desk .nav{order:1;display:flex!important;background:var(--bg);flex-direction:column;width:232px;flex:0 0 232px;border-top:0;border-right:1px solid var(--line);padding:22px 14px;gap:4px;grid-template-columns:none!important}
 #app.desk .nav:before{content:"Jornada";font-weight:800;font-size:20px;letter-spacing:-.02em;padding:4px 12px 18px}
 #app.desk .nav button{flex-direction:row;justify-content:flex-start;min-height:48px;padding:0 10px;gap:10px;font-size:15px;border-radius:14px}
 #app.desk .nav button.on{background:var(--card)}
@@ -310,9 +310,28 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,Menlo
 #app.desk .cards{display:none}#app.desk .tbl{display:block}
 #app.desk .cal{max-width:760px;gap:8px}#app.desk .day{aspect-ratio:1.5;font-size:17px}
 #app.desk .subtabs.one{flex-wrap:wrap;overflow:visible}
-#app.desk .shade{align-items:center;justify-content:center;padding:24px}
-#app.desk .sheet{max-width:600px;border-radius:26px;max-height:90%}#app.desk .sheet:before{display:none}
-#app.desk .toast{left:auto;right:28px;bottom:28px;width:380px}
+#app.pc .shade{align-items:center;justify-content:center;padding:24px}
+#app.pc .sheet{max-width:600px;border-radius:26px;max-height:90%}#app.pc .sheet:before{display:none}
+#app.pc .toast{left:auto;right:28px;bottom:28px;width:380px}
+/* portada: texto a la izquierda, botones a la derecha */
+#app.pc .welcome{padding:56px 72px}
+#app.pc .land{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,440px);column-gap:72px;align-items:center}
+#app.pc .land .whero,#app.pc .land .wside{display:flex;flex-direction:column}
+#app.pc .land h1{font-size:64px}#app.pc .land p{font-size:19px}
+#app.pc .land .book{flex:none;min-height:0;margin-top:28px;justify-items:start}#app.pc .land .book svg{width:300px}
+/* login, crear cuenta, entrar con link, clave nueva: columna centrada */
+#app.pc .welcome:not(.land){align-items:center;justify-content:center}
+#app.pc .welcome:not(.land)>*{width:100%;max-width:480px}
+#app.pc .welcome:not(.land)>.back{width:44px;align-self:flex-start;margin-left:max(0px,calc(50% - 240px))}
+/* guía inicial y PIN */
+#app.pc .tour{align-items:center;padding:40px}#app.pc .tour>*{width:100%;max-width:600px}#app.pc .tour .art{flex:none;min-height:260px}
+#app.pc .tour .skip{align-self:flex-end;width:auto;max-width:none}
+/* primer ingreso (datos de la empresa) y otras pantallas sin menú: contenido centrado */
+#app.pc:not(.desk) main{padding:0 36px 48px}
+#app.pc:not(.desk) main .top{margin:0 -36px 24px;padding:32px 36px}
+#app.pc:not(.desk) main>*:not(.top){max-width:640px;margin-left:auto;margin-right:auto}
+/* vista del trabajador en PC: menú lateral y contenido en una columna cómoda */
+#app.desk.wk main>*:not(.top){max-width:720px;margin-left:auto;margin-right:auto}
 table.dt{width:100%;border-collapse:collapse;font-size:15px}
 table.dt th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
 table.dt td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -1011,13 +1030,13 @@ function vWorProfile(){
 
 /* ---------- pantallas de entrada ---------- */
 function welcome(){
-  return '<div class="welcome"><div style="font-weight:800;font-size:18px">Jornada</div><h1>La libreta de asistencia, en tu celular.</h1><p>Marca la llegada, lleva los pagos y avisa cambios, sin papeles.</p>'+
+  return '<div class="welcome land"><div class="whero"><div style="font-weight:800;font-size:18px">Jornada</div><h1>La libreta de asistencia, en tu celular.</h1><p>Marca la llegada, lleva los pagos y avisa cambios, sin papeles.</p>'+
   '<div class="book"><svg viewBox="0 0 260 180" role="img" aria-label="Libreta de asistencia"><rect x="30" y="22" width="200" height="146" rx="16" fill="#15161a" opacity=".12"/><rect x="22" y="12" width="200" height="146" rx="16" fill="#fff"/><rect x="22" y="12" width="200" height="34" rx="16" fill="#15161a"/><rect x="22" y="30" width="200" height="16" fill="#15161a"/>'+
   Array.from({length:21},(_,i)=>{const x=38+(i%7)*25,y=58+Math.floor(i/7)*30,c=[0,1,2,3,4,7,8,9,10,11,14,15,16].includes(i)?(i===9?'#e5484d':i===15?'#f59e0b':'#1f9d55'):'#e7e5dd';return '<rect x="'+x+'" y="'+y+'" width="19" height="22" rx="6" fill="'+c+'"/>'}).join('')+
-  '<circle cx="196" cy="29" r="7" fill="#ffd23f"/></svg></div>'+
+  '<circle cx="196" cy="29" r="7" fill="#ffd23f"/></svg></div></div><div class="wside">'+
   '<button class="wbtn" data-a="empgo">'+svg('team',30)+'<div><b>Soy empleador</b><span>Asistencia, pagos y documentos</span></div></button>'+
   '<button class="wbtn alt" data-a="join">'+svg('me',30)+'<div><b>Soy trabajador(a)</b><span>Entrar con el link de mi empleador</span></div></button>'+
-  '<div class="fine" style="margin-top:14px;text-align:center">Probar sin cuenta, con datos de ejemplo, como:</div><div class="seg" style="margin-top:6px"><button class="btn" style="background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demo">Empleador</button><button class="btn" style="background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demow">Trabajador(a)</button></div>'+(PREVIEW?'<div class="fine">Estás en la vista previa: aquí funciona el modo de prueba. Las cuentas reales funcionan en la app publicada.</div>':'')+'</div>';
+  '<div class="fine" style="margin-top:14px;text-align:center">Probar sin cuenta, con datos de ejemplo, como:</div><div class="seg" style="margin-top:6px"><button class="btn" style="background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demo">Empleador</button><button class="btn" style="background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demow">Trabajador(a)</button></div>'+(PREVIEW?'<div class="fine">Estás en la vista previa: aquí funciona el modo de prueba. Las cuentas reales funcionan en la app publicada.</div>':'')+'</div></div>';
 }
 function joinScreen(){
   return '<div class="welcome">'+(S.device?'':'<button class="back" data-a="out" aria-label="Volver">'+svg('l')+'</button>')+'<h1 style="font-size:38px">Entra con tu link</h1><p>Tu empleador te manda un link por WhatsApp. Ábrelo desde este teléfono y listo: no necesitas clave.</p><div style="flex:1;min-height:30px"></div>'+
@@ -1077,7 +1096,7 @@ function render(keep){
   if(S.role==='emp'&&!locked)checkLate();
   if(!tour){if(S.role==='emp'&&!locked&&!S.toured.e)tour={kind:'e',i:0};else if(S.device&&W(S.wid)&&!S.toured['w_'+S.wid])tour={kind:'w',i:0}}
   if(plMap){try{plMap.remove()}catch(e){}plMap=null}
-  app.classList.toggle('wk',S.role==='wor');app.classList.remove('desk');
+  app.classList.toggle('wk',S.role==='wor');app.classList.remove('desk');app.classList.toggle('pc',wide());
   if(S.device&&S.mode==='cloud'&&!W(S.device.wid))app.innerHTML='<div class="welcome" style="justify-content:center;text-align:center"><div class="spin"></div><h1 style="font-size:30px">Cargando tus datos…</h1><p style="margin:0 auto">Si no tienes señal, se cargarán cuando vuelva.</p></div>';
   else if(S.role==='emp'&&!locked&&needsOnb())app.innerHTML=onbScreen();
   else if(tour)app.innerHTML=tourHtml();
@@ -1096,7 +1115,7 @@ function render(keep){
       const un=S.msgs.filter(m=>m.wid===S.wid&&m.from==='e'&&!m.read).length;
       tabs=[['home','Hoy','home'],['days','Mis días','cal'],['pay','Mi plata','pay'],['msgs','Mensajes','msg',un],['prof','Perfil','me']];
     }
-    const cur=S.role==='emp'&&S.detail?'team':S.tab;app.classList.toggle('desk',S.role==='emp'&&wide());
+    const cur=S.role==='emp'&&S.detail?'team':S.tab;app.classList.toggle('desk',wide());
     app.innerHTML='<main>'+body+'</main><nav class="nav" style="grid-template-columns:repeat('+tabs.length+',1fr)">'+tabs.map(x=>'<button class="'+(cur===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+svg(x[2])+x[1]+(x[3]?'<span class="n">'+x[3]+'</span>':'')+'</button>').join('')+'</nav>';
     if(keep)app.querySelector('main').scrollTop=sc;
   }
