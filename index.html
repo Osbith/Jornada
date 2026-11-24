@@ -363,7 +363,7 @@ const METHODS=['Transferencia','Efectivo','Depósito','Otro'];
 const DOCCAT=['Contrato de trabajo','Anexo de contrato','Comprobante Previred','Liquidación de sueldo','Comprobante de pago','Licencia médica','Permiso / Vacaciones','Finiquito','Cédula de identidad','Otros'];
 const CAUSAL=[['159-1','Art. 159 N° 1 · Mutuo acuerdo'],['159-2','Art. 159 N° 2 · Renuncia del trabajador'],['159-4','Art. 159 N° 4 · Vencimiento del plazo'],['160','Art. 160 · Incumplimiento grave'],['163','Art. 163 bis / desahucio del empleador']];
 const QUICK=[['Voy atrasada','Hoy voy a llegar un poco tarde.'],['Hoy no puedo ir','Hoy no voy a poder ir a trabajar.'],['Estoy enferma','Me siento mal / estoy enferma. Te aviso cómo sigo.'],['Necesito un permiso','Necesito pedirte un permiso. ¿Podemos hablar?']];
-const APP_VERSION='1.11',APP_DATE='24-11-2026';const verTxt=()=>'Versión '+APP_VERSION+' · '+APP_DATE;
+const APP_VERSION='1.12',APP_DATE='24-11-2026';const verTxt=()=>'Versión '+APP_VERSION+' · '+APP_DATE;
 const KEY='jornada_v7';
 const T=new Date();T.setHours(12,0,0,0);
 const pad=n=>String(n).padStart(2,'0');
@@ -1177,7 +1177,7 @@ function askDiscard(){const a=app.querySelector('#wfdisc'),b=app.querySelector('
 const CASA_LAB=['Labor doméstica','Baby sitting','Cuidado de personas','Jardinería'];
 const etypeFor=lab=>S.emp.kind==='empresa'?'empresa':CASA_LAB.includes(lab)?'casa':'empresa';
 function wfToggle(){const g=id=>app.querySelector('#'+id);if(!g('wct'))return;
-  {const lab=g('wl').value;g('wmobox').hidden=lab!=='Labor doméstica';const et0=g('wet').value,ch=g('wl').dataset.prev!==undefined&&g('wl').dataset.prev!==lab;if(ch)g('wet').value=etypeFor(lab);g('wl').dataset.prev=lab;
+  {const lab=g('wl').value;g('wmobox').hidden=!['Labor doméstica','Cuidado de personas'].includes(lab);const et0=g('wet').value,ch=g('wl').dataset.prev!==undefined&&g('wl').dataset.prev!==lab;if(ch)g('wet').value=etypeFor(lab);g('wl').dataset.prev=lab;
    g('wetinfo').innerHTML=g('wet').value==='casa'?'<b>Contrato de casa particular.</b> Con esta labor se aplican las reglas especiales para trabajadores de casa particular (por ejemplo, la indemnización a todo evento).':'<b>Contrato general.</b> Con esta labor se aplican las reglas generales del Código del Trabajo.';
    const per={Mensual:'por mes','Diario':'por día','Por hora':'por hora'}[g('wmod').value]||'';const l=app.querySelector('label[for="wrt"]');if(l)l.textContent='Monto '+per+' *';g('wrt').placeholder={Mensual:'$550.000','Diario':'$35.000','Por hora':'$5.000'}[g('wmod').value]||'';
    g('wfcount').textContent=g('wf').value.length+' / 400'}const ct=g('wct').value,et=g('wet').value,fm=ct==='Indefinido'||ct==='Plazo fijo',nw=g('wnew');
