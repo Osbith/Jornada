@@ -296,7 +296,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,Menlo
 
 /* ---------- versión para PC (empleador, pantallas anchas) ---------- */
 .grid2{display:contents}.tbl{display:none}.whero,.wside{display:contents}
-@media(min-width:900px){
+@media(min-width:800px){
 #app.pc{max-width:1280px;height:calc(100% - 40px);margin-top:20px;border-radius:28px}#app.desk{flex-direction:row}
 #app.desk main{order:2;padding:0 36px 48px}
 #app.desk .top{margin:0 -36px 20px;padding:26px 36px 26px;border-radius:0 0 28px 0}
@@ -1088,7 +1088,7 @@ let pinBuf='';
 function pinScreen(){return '<div class="pinwrap">'+svg('lock',40)+'<h1 style="margin:12px 0 0;font-size:28px">Ingresa tu PIN</h1><div class="pdots" id="pd">'+[0,1,2,3].map(i=>'<i class="'+(i<pinBuf.length?'on':'')+'"></i>').join('')+'</div><div class="pad">'+[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button data-a="pin" data-v="'+k+'" aria-label="'+(k==='⌫'?'Borrar':k)+'">'+k+'</button>').join('')+'</div><button class="btn" style="margin-top:22px;background:transparent;box-shadow:none" data-a="out">Salir</button></div>'}
 
 /* ---------- render ---------- */
-const wideMQ=window.matchMedia('(min-width:900px)'),wide=()=>wideMQ.matches;
+const wideMQ=window.matchMedia('(min-width:800px)'),wide=()=>wideMQ.matches;
 try{wideMQ.addEventListener('change',()=>render(true))}catch(e){}
 function render(keep){
   const sc=keep?app.querySelector('main')?.scrollTop||0:0;
