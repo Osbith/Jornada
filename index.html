@@ -987,7 +987,7 @@ function welcome(){
   '<circle cx="196" cy="29" r="7" fill="#ffd23f"/></svg></div>'+
   '<button class="wbtn" data-a="empgo">'+svg('team',30)+'<div><b>Soy empleador</b><span>Asistencia, pagos y documentos</span></div></button>'+
   '<button class="wbtn alt" data-a="join">'+svg('me',30)+'<div><b>Soy trabajador(a)</b><span>Entrar con el link de mi empleador</span></div></button>'+
-  '<button class="btn full" style="margin-top:14px;background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demo">Probar con datos de ejemplo (sin cuenta)</button>'+(PREVIEW?'<div class="fine">Estás en la vista previa: aquí funciona el modo de prueba. Las cuentas reales funcionan en la app publicada.</div>':'')+'</div>';
+  '<div class="fine" style="margin-top:14px;text-align:center">Probar sin cuenta, con datos de ejemplo, como:</div><div class="seg" style="margin-top:6px"><button class="btn" style="background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demo">Empleador</button><button class="btn" style="background:rgb(0 0 0/.08);box-shadow:none;color:var(--sunink)" data-a="demow">Trabajador(a)</button></div>'+(PREVIEW?'<div class="fine">Estás en la vista previa: aquí funciona el modo de prueba. Las cuentas reales funcionan en la app publicada.</div>':'')+'</div>';
 }
 function joinScreen(){
   return '<div class="welcome">'+(S.device?'':'<button class="back" data-a="out" aria-label="Volver">'+svg('l')+'</button>')+'<h1 style="font-size:38px">Entra con tu link</h1><p>Tu empleador te manda un link por WhatsApp. Ábrelo desde este teléfono y listo: no necesitas clave.</p><div style="flex:1;min-height:30px"></div>'+
@@ -1480,6 +1480,7 @@ app.addEventListener('click',async e=>{
   if(a==='forgot'){sheet('<h3>Olvidé mi clave</h3><div class="sub">Escribe el correo de tu cuenta. Te enviaremos un link para crear una clave nueva.</div><form id="fforgot"><label for="fge">Correo</label><input id="fge" type="email" autocomplete="email" required value="'+esc(authEmail)+'"><div id="fgerr"></div><div class="opts"><button class="btn pri" type="submit">Enviar link</button><button class="btn" type="button" data-a="close">Cancelar</button></div></form>');return}
   if(a==='recback'){recTok=null;authMode='in';authErr='';try{sb&&sb.auth.signOut()}catch(e){}render();return}
   if(a==='authmode'){authMode=authMode==='up'?'in':'up';authErr='';render();return}
+  if(a==='demow'){S=seed();locked=false;const w=S.workers.find(x=>x.invite&&x.invite.token&&x.role!=='miembro');w.invite.used=null;const err=redeem(w.invite.token);if(err){toast(err);return}S.toured['w_'+w.id]=false;render();return}
   if(a==='demo'){S=seed();S.role='emp';S.toured.e=false;locked=false;render();return}
   if(a==='syncnow'){toast('Sincronizando…');syncNow({pull:true,full:true}).then(()=>{render(true);toast(sync.err?'No se pudo: '+sync.err:'Todo sincronizado')});return}
   if(a==='loaddemo'){sheet('<h3>¿Cargar ejemplos?</h3><div class="sub">Se agregan 6 trabajadores de ejemplo con su asistencia y pagos. Puedes borrarlos después con «Borrar todo».</div><div class="opts"><button class="btn pri" data-a="loaddemook">Cargar ejemplos</button><button class="btn" data-a="close">Cancelar</button></div>');return}
