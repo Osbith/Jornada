@@ -293,6 +293,34 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 ui-monospace,Menlo
 .phs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.phs img{width:72px;height:72px;object-fit:cover;border-radius:10px;background:#eee;cursor:pointer}.bigph{width:100%;border-radius:12px;margin-top:8px}
 .wsteps{display:flex;gap:6px;overflow-x:auto;margin:2px 0 10px;padding-bottom:2px}.wsteps button{flex:0 0 auto;border:0;border-radius:999px;padding:7px 12px;background:rgb(0 0 0/.06);color:inherit;font:inherit;font-size:13px;font-weight:700}.wsteps button.on{background:var(--sunink,#15161a);color:#fff}
 .dwrap{position:relative;display:flex;gap:6px;align-items:stretch}.dwrap .dmv{flex:1;min-width:0}.dhide{position:absolute!important;opacity:0;pointer-events:none;width:1px!important;height:1px!important;left:8px;bottom:0;padding:0!important;border:0!important}[hidden]{display:none!important}.subtabs.one{display:flex;overflow-x:auto;scrollbar-width:none}.subtabs.one::-webkit-scrollbar{display:none}.subtabs.one button{flex:0 0 auto;white-space:nowrap;padding:0 14px;font-size:14px}.lines b{min-width:0;overflow-wrap:anywhere}.lnk{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:right;cursor:pointer;text-decoration:underline;text-decoration-color:rgb(0 0 0/.25);text-underline-offset:3px}.seg3 .btn{white-space:nowrap;min-width:0}.paybtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 14px}.paybtns .btn:first-child{grid-column:1/-1}.dcal{flex:0 0 40px;border:1px solid rgb(0 0 0/.12);border-radius:12px;background:#fff;display:grid;place-items:center;color:inherit}
+
+/* ---------- versión para PC (empleador, pantallas anchas) ---------- */
+.grid2{display:contents}.tbl{display:none}
+@media(min-width:900px){
+#app.desk{max-width:1280px;flex-direction:row;height:calc(100% - 40px);margin-top:20px;border-radius:28px}
+#app.desk main{order:2;padding:0 36px 48px}
+#app.desk .top{margin:0 -36px 20px;padding:26px 36px 26px;border-radius:0 0 28px 0}
+#app.desk .nav{order:1;display:flex!important;flex-direction:column;width:232px;flex:0 0 232px;border-top:0;border-right:1px solid var(--line);padding:22px 14px;gap:4px;grid-template-columns:none!important}
+#app.desk .nav:before{content:"Jornada";font-weight:800;font-size:20px;letter-spacing:-.02em;padding:4px 12px 18px}
+#app.desk .nav button{flex-direction:row;justify-content:flex-start;min-height:48px;padding:0 10px;gap:10px;font-size:15px;border-radius:14px}
+#app.desk .nav button.on{background:var(--card)}
+#app.desk .nav svg{width:40px;height:30px;padding:4px 9px}
+#app.desk .nav .n{position:static;margin-left:auto}
+#app.desk .grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:0 14px;align-items:start}
+#app.desk .cards{display:none}#app.desk .tbl{display:block}
+#app.desk .cal{max-width:760px;gap:8px}#app.desk .day{aspect-ratio:1.5;font-size:17px}
+#app.desk .subtabs.one{flex-wrap:wrap;overflow:visible}
+#app.desk .shade{align-items:center;justify-content:center;padding:24px}
+#app.desk .sheet{max-width:600px;border-radius:26px;max-height:90%}#app.desk .sheet:before{display:none}
+#app.desk .toast{left:auto;right:28px;bottom:28px;width:380px}
+table.dt{width:100%;border-collapse:collapse;font-size:15px}
+table.dt th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+table.dt td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.dt tr:last-child td{border-bottom:0}
+table.dt tr.click{cursor:pointer}table.dt tr.click:hover td{background:var(--bg)}
+table.dt .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.dt .name{font-size:15px}
+}
 </style>
 </head>
 <body>
@@ -676,15 +704,14 @@ function vEmpHome(){
    if(rp.length)rows.push('<div class="hist row"><div class="grow"><div class="name">'+(canAdmin()?'Solicitudes por aprobar: ':'Tus solicitudes pendientes: ')+rp.length+'</div><div class="sub">'+esc(rp.slice(0,2).map(r=>(canAdmin()?r.byName+': ':'')+r.text).join(' · ')).slice(0,140)+'</div></div><button class="btn sm'+(canAdmin()?' pri':'')+'" data-a="reqs">'+(canAdmin()?'Revisar':'Ver')+'</button></div>');
    if(rows.length)h+='<div class="card"><div class="sub" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px">Resumen de hoy</div>'+rows.join('')+'</div>'}
   const live=solo.filter(w=>S.ck[w.id][TODAY]&&S.ck[w.id][TODAY].in).sort((a,b)=>(S.ck[b.id][TODAY].in.st==='pend')-(S.ck[a.id][TODAY].in.st==='pend'));
-  h+=live.map(w=>liveCard(w)+(w.role==='capataz'?crewCard(w):'')).join('');
-  h+=capList().filter(c=>!live.includes(c)).map(crewCard).join('');
+  h+='<div class="grid2">'+live.map(w=>liveCard(w)+(w.role==='capataz'?crewCard(w):'')).join('')+capList().filter(c=>!live.includes(c)).map(crewCard).join('')+'</div>';
   const crewPend=active().filter(w=>w.role==='miembro'&&S.ck[w.id][TODAY]&&S.ck[w.id][TODAY].in&&S.ck[w.id][TODAY].in.st==='pend');
   h+=crewPend.map(liveCard).join('');
-  h+='<h2>Asistencia de hoy</h2>'+solo.map(w=>{const a=S.att[w.id][TODAY],on=works(w,TODAY);
+  h+='<h2>Asistencia de hoy</h2><div class="grid2">'+solo.map(w=>{const a=S.att[w.id][TODAY],on=works(w,TODAY);
     return '<div class="card"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+'</div><div class="sub">'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':'')+(on?' · '+w.w.start+' a '+w.w.end:' · hoy no le toca')+'</div></div><button class="ib" data-a="dayx" data-v="'+w.id+'|'+TODAY+'" aria-label="Detalle del día">'+svg('r')+'</button></div>'+
-    (on||a?'<div class="seg"><button class="btn'+((a&&a.s==='P')||(!a&&ckin(w)&&ckin(w).st!=='rej')?' on-p':'')+'" data-a="mark" data-v="'+w.id+'|P">Presente</button><button class="btn'+(a&&a.s==='A'?' on-a':'')+'" data-a="mark" data-v="'+w.id+'|A">Ausente</button></div>':'<button class="btn sm" style="margin-top:10px" data-a="mark" data-v="'+w.id+'|P">Vino igual: marcar presente</button>')+'</div>'}).join('');
+    (on||a?'<div class="seg"><button class="btn'+((a&&a.s==='P')||(!a&&ckin(w)&&ckin(w).st!=='rej')?' on-p':'')+'" data-a="mark" data-v="'+w.id+'|P">Presente</button><button class="btn'+(a&&a.s==='A'?' on-a':'')+'" data-a="mark" data-v="'+w.id+'|A">Ausente</button></div>':'<button class="btn sm" style="margin-top:10px" data-a="mark" data-v="'+w.id+'|P">Vino igual: marcar presente</button>')+'</div>'}).join('')+'</div>';
   const al=alerts();
-  h+='<h2>Avisos'+(al.length?' ('+al.length+')':'')+'</h2>'+(al.length?al.map(x=>'<div class="alert"><span class="dot" style="background:'+x.c+'"></span><div class="grow"><div class="name">'+x.t+'</div><div class="sub">'+x.d+'</div><button class="btn sm" style="margin-top:8px" data-a="'+x.act+'" data-v="'+x.v+'">'+x.btn+'</button></div>'+(x.fixed?'':'<button class="x" data-a="dismiss" data-v="'+x.id+'" aria-label="Descartar aviso">×</button>')+'</div>').join(''):'<div class="card empty">Todo al día.</div>');
+  h+='<h2>Avisos'+(al.length?' ('+al.length+')':'')+'</h2>'+(al.length?'<div class="grid2">'+al.map(x=>'<div class="alert"><span class="dot" style="background:'+x.c+'"></span><div class="grow"><div class="name">'+x.t+'</div><div class="sub">'+x.d+'</div><button class="btn sm" style="margin-top:8px" data-a="'+x.act+'" data-v="'+x.v+'">'+x.btn+'</button></div>'+(x.fixed?'':'<button class="x" data-a="dismiss" data-v="'+x.id+'" aria-label="Descartar aviso">×</button>')+'</div>').join('')+'</div>':'<div class="card empty">Todo al día.</div>');
   const tot=active().reduce((s,w)=>s+Math.max(0,globalBal(w)),0);
   h+='<h2>Este mes</h2><div class="card"><div class="sub">Total por pagar (estimado)</div><div class="big">'+clp(tot)+'</div>'+active().map(w=>'<div class="row" style="margin-top:10px"><div class="grow sub">'+esc(first(w))+(w.role==='miembro'?' · cuadrilla':'')+'</div><b>'+clp(globalBal(w))+'</b></div>').join('')+'</div>';
   return h;
@@ -707,10 +734,12 @@ function vEmpTeam(){
   h+='<input id="fq" data-c="filq" type="search" placeholder="Buscar por nombre o RUT" value="'+esc((S.fil||{}).q||'')+'" style="margin:0 0 10px" aria-label="Buscar en el equipo">';
   if(S.filOpen)h+=filterBar();
   h+='<div class="seg" style="margin:0 0 14px"><button class="btn'+(S.eqTab==='activo'?' dark':'')+'" data-a="eq" data-v="activo">Activos ('+na+')</button><button class="btn'+(S.eqTab==='finiquitado'?' dark':'')+'" data-a="eq" data-v="finiquitado">Finiquitados ('+nf+')</button></div>';
-  h+=list.length?list.map(w=>{const ms=w.role==='capataz'&&!filtOn()?crewOf(w.id):[];
+  if(list.length){const rows=[];for(const w of list){rows.push(w);if(w.role==='capataz'&&!filtOn())rows.push(...crewOf(w.id))}
+    h+='<div class="tbl card" style="padding:4px 8px"><table class="dt"><thead><tr><th>Nombre</th><th>Labor</th><th>Días y horario</th><th class="num">Sueldo</th><th>App</th><th class="num">'+(S.eqTab==='activo'?'Saldo pendiente':'Finiquito')+'</th></tr></thead><tbody>'+rows.map(w=>'<tr class="click" data-a="open" data-v="'+w.id+'"><td><div class="name">'+(w.role==='miembro'&&W(w.crew)&&!filtOn()?'↳ ':'')+esc(w.p.name)+'</div><div class="sub">'+esc(w.p.rut)+((S.emp.branches||[]).length?' · '+esc(brName(w.branch)):'')+'</div></td><td>'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':w.role==='miembro'?' · cuadrilla':'')+'</td><td>'+w.w.days.map(d=>DAB[d]).join(', ')+'<div class="sub">'+w.w.start+' a '+w.w.end+'</div></td><td class="num">'+clp(w.w.rate)+'<div class="sub">'+w.w.modality+'</div></td><td>'+invState(w)+'</td><td class="num"><b>'+(w.status==='activo'?clp(globalBal(w)):fmtD(w.term.date))+'</b></td></tr>').join('')+'</tbody></table></div>'}
+  h+=list.length?'<div class="cards">'+list.map(w=>{const ms=w.role==='capataz'&&!filtOn()?crewOf(w.id):[];
     return '<div class="card"><button style="display:block;width:100%;text-align:left;border:0;background:none;padding:0;cursor:pointer;color:inherit" data-a="open" data-v="'+w.id+'"><div class="row"><div class="av">'+esc(first(w)[0])+'</div><div class="grow"><div class="name">'+esc(w.p.name)+'</div><div class="sub">'+esc(w.w.labor)+(w.role==='capataz'?' · capataz':'')+' · '+w.w.modality+' '+clp(w.w.rate)+'</div><div class="sub">'+w.w.days.map(d=>DAB[d]).join(', ')+' · '+w.w.start+' a '+w.w.end+'</div><div style="margin-top:4px">'+((S.emp.branches||[]).length?'<span class="tag">'+esc(brName(w.branch))+'</span> ':'')+(w.groups||[]).map(id=>GRP().find(g=>g.id===id)).filter(Boolean).map(g=>'<span class="tag">'+esc(g.name)+'</span> ').join('')+invState(w).replace('margin-left:4px','')+'</div></div>'+svg('r')+'</div></button>'+
     (ms.length?'<div style="margin-top:10px"><div class="sub" style="font-weight:700">Cuadrilla ('+ms.length+')</div>'+ms.map(m=>'<button class="crewrow" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;text-align:left;cursor:pointer;color:inherit;font:inherit" data-a="open" data-v="'+m.id+'"><div class="grow"><div class="name" style="font-size:15px">'+esc(m.p.name)+'</div><div class="sub">'+m.w.modality+' '+clp(m.w.rate)+' · saldo '+clp(globalBal(m))+'</div></div>'+svg('r')+'</button>').join('')+'</div>':'')+
-    (w.status==='activo'?'<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"><span class="grow sub">Saldo pendiente</span><b>'+clp(globalBal(w))+'</b></div>':'<div class="sub" style="margin-top:8px">Finiquito el '+fmtD(w.term.date)+'</div>')+'</div>'}).join(''):'<div class="card empty">No hay personas en esta lista.</div>';
+    (w.status==='activo'?'<div class="row" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"><span class="grow sub">Saldo pendiente</span><b>'+clp(globalBal(w))+'</b></div>':'<div class="sub" style="margin-top:8px">Finiquito el '+fmtD(w.term.date)+'</div>')+'</div>'}).join('')+'</div>':'<div class="card empty">No hay personas en esta lista.</div>';
   return h;
 }
 function vEmpMsgs(){
@@ -812,7 +841,8 @@ function vDetail(){
     h+='<div class="card"><div class="sub">Saldo del mes</div><div class="big">'+clp(f.bal)+'</div><div class="lines" style="margin-top:12px">'+finLines(w,f).map(l=>'<div><span>'+l[0]+'</span><b>'+l[1]+'</b></div>').join('')+'</div>'+(w.hist&&w.hist.owed?'<div class="row" style="margin-top:10px"><span class="grow sub">Se le debía al empezar a usar la app</span><b>'+clp(w.hist.owed)+'</b></div>':'')+'<div class="row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><span class="grow sub">Saldo total acumulado</span><b>'+clp(globalBal(w))+'</b></div><p class="note">Horas extra con recargo de 50% sobre jornada de 42 h. '+(f.L?'El monto a pagar ya descuenta AFP, salud, cesantía e impuesto.':formal(w)?'Montos líquidos: las cotizaciones se pagan aparte en Previred.':'')+'</p></div>';
     if(w.status==='activo')h+='<div class="paybtns"><button class="btn pri sm" data-a="payform" data-v="Pago de sueldo">Pagar sueldo</button><button class="btn sm" data-a="payform" data-v="Anticipo">Anticipo</button><button class="btn sm" data-a="payform" data-v="Descuento">Descuento</button></div>';
     const l=S.pays.filter(p=>p.wid===w.id).sort((a,b)=>b.date.localeCompare(a.date));
-    h+='<h2>Historial ('+l.length+')</h2><div class="card">'+(l.length?l.map(p=>'<div class="hist"><div class="row"><div class="grow"><div class="name">'+p.type+' <span class="tag">'+p.method+'</span></div><div class="sub">'+fmtD(p.date)+' · '+esc(p.note||'Sin nota')+'</div>'+(p.type==='Descuento'?'':p.recv?'<div class="sub" style="color:var(--p);font-weight:700">'+svg('ok',14)+' '+esc(first(w))+' confirmó que lo recibió ('+fmtD(p.recv.date)+')</div>':'<div class="sub" style="color:#b45309;font-weight:700">Esperando que '+esc(first(w))+' confirme</div>')+'</div><div class="amt">'+(p.type==='Pago de sueldo'?'':'−')+clp(p.amount)+'</div></div><div class="links">'+(p.receipt?'<button class="btn sm" data-a="viewrec" data-v="'+p.id+'">Ver comprobante</button>':'<button class="btn sm" data-a="addrec" data-v="'+p.id+'">Adjuntar comprobante</button>')+'<a class="btn sm" href="'+wa(w.p.phone,'Hola '+first(w)+', te registré un '+p.type.toLowerCase()+' de '+clp(p.amount)+' el '+fmtD(p.date)+' ('+p.method.toLowerCase()+').')+'" target="_blank" rel="noopener">Avisar por WhatsApp</a><button class="btn sm" data-a="delpay" data-v="'+p.id+'">Borrar</button></div></div>').join(''):'<div class="empty">Aún no hay movimientos.</div>')+'</div>';
+    if(l.length)h+='<h2 class="tbl">Historial ('+l.length+')</h2><div class="tbl card" style="padding:4px 8px"><table class="dt"><thead><tr><th>Fecha</th><th>Tipo</th><th>Medio</th><th>Nota</th><th>Estado</th><th class="num">Monto</th><th></th></tr></thead><tbody>'+l.map(p=>'<tr><td style="white-space:nowrap">'+fmtD(p.date)+'</td><td>'+p.type+'</td><td>'+p.method+'</td><td>'+esc(p.note||'—')+'</td><td>'+(p.type==='Descuento'?'—':p.recv?'<span style="color:var(--p);font-weight:700">Recibido</span>':'<span style="color:#b45309;font-weight:700">Por confirmar</span>')+'</td><td class="num"><b>'+(p.type==='Pago de sueldo'?'':'−')+clp(p.amount)+'</b></td><td class="num">'+(p.receipt?'<button class="btn sm" data-a="viewrec" data-v="'+p.id+'">Comprobante</button>':'<button class="btn sm" data-a="addrec" data-v="'+p.id+'">Adjuntar</button>')+' <button class="btn sm" data-a="delpay" data-v="'+p.id+'">Borrar</button></td></tr>').join('')+'</tbody></table></div>';
+    h+='<div class="'+(l.length?'cards':'')+'"><h2>Historial ('+l.length+')</h2><div class="card">'+(l.length?l.map(p=>'<div class="hist"><div class="row"><div class="grow"><div class="name">'+p.type+' <span class="tag">'+p.method+'</span></div><div class="sub">'+fmtD(p.date)+' · '+esc(p.note||'Sin nota')+'</div>'+(p.type==='Descuento'?'':p.recv?'<div class="sub" style="color:var(--p);font-weight:700">'+svg('ok',14)+' '+esc(first(w))+' confirmó que lo recibió ('+fmtD(p.recv.date)+')</div>':'<div class="sub" style="color:#b45309;font-weight:700">Esperando que '+esc(first(w))+' confirme</div>')+'</div><div class="amt">'+(p.type==='Pago de sueldo'?'':'−')+clp(p.amount)+'</div></div><div class="links">'+(p.receipt?'<button class="btn sm" data-a="viewrec" data-v="'+p.id+'">Ver comprobante</button>':'<button class="btn sm" data-a="addrec" data-v="'+p.id+'">Adjuntar comprobante</button>')+'<a class="btn sm" href="'+wa(w.p.phone,'Hola '+first(w)+', te registré un '+p.type.toLowerCase()+' de '+clp(p.amount)+' el '+fmtD(p.date)+' ('+p.method.toLowerCase()+').')+'" target="_blank" rel="noopener">Avisar por WhatsApp</a><button class="btn sm" data-a="delpay" data-v="'+p.id+'">Borrar</button></div></div>').join(''):'<div class="empty">Aún no hay movimientos.</div>')+'</div></div>';
   }
   if(S.sub==='rep'){
     const audited=Object.entries(S.att[w.id]).filter(([k,a])=>k.startsWith(S.mk)&&(a.edited||a.extra)).sort(),cks=Object.entries(S.ck[w.id]).filter(([k])=>k.startsWith(S.mk)).map(([,c])=>c);
@@ -1039,13 +1069,15 @@ let pinBuf='';
 function pinScreen(){return '<div class="pinwrap">'+svg('lock',40)+'<h1 style="margin:12px 0 0;font-size:28px">Ingresa tu PIN</h1><div class="pdots" id="pd">'+[0,1,2,3].map(i=>'<i class="'+(i<pinBuf.length?'on':'')+'"></i>').join('')+'</div><div class="pad">'+[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':'<button data-a="pin" data-v="'+k+'" aria-label="'+(k==='⌫'?'Borrar':k)+'">'+k+'</button>').join('')+'</div><button class="btn" style="margin-top:22px;background:transparent;box-shadow:none" data-a="out">Salir</button></div>'}
 
 /* ---------- render ---------- */
+const wideMQ=window.matchMedia('(min-width:900px)'),wide=()=>wideMQ.matches;
+try{wideMQ.addEventListener('change',()=>render(true))}catch(e){}
 function render(keep){
   const sc=keep?app.querySelector('main')?.scrollTop||0:0;
   if(S.device){const dw=W(S.device.wid);if(S.mode==='cloud'){S.role='wor';S.wid=S.device.wid}else if(!dw||dw.status!=='activo'||!dw.invite||dw.invite.token!==S.device.tok){S.device=null;S.role='join';S.wid=null;joinErr='Tu empleador renovó tu acceso. Abre el link nuevo que te envió.'}else{S.role='wor';S.wid=dw.id}}
   if(S.role==='emp'&&!locked)checkLate();
   if(!tour){if(S.role==='emp'&&!locked&&!S.toured.e)tour={kind:'e',i:0};else if(S.device&&W(S.wid)&&!S.toured['w_'+S.wid])tour={kind:'w',i:0}}
   if(plMap){try{plMap.remove()}catch(e){}plMap=null}
-  app.classList.toggle('wk',S.role==='wor');
+  app.classList.toggle('wk',S.role==='wor');app.classList.remove('desk');
   if(S.device&&S.mode==='cloud'&&!W(S.device.wid))app.innerHTML='<div class="welcome" style="justify-content:center;text-align:center"><div class="spin"></div><h1 style="font-size:30px">Cargando tus datos…</h1><p style="margin:0 auto">Si no tienes señal, se cargarán cuando vuelva.</p></div>';
   else if(S.role==='emp'&&!locked&&needsOnb())app.innerHTML=onbScreen();
   else if(tour)app.innerHTML=tourHtml();
@@ -1064,7 +1096,7 @@ function render(keep){
       const un=S.msgs.filter(m=>m.wid===S.wid&&m.from==='e'&&!m.read).length;
       tabs=[['home','Hoy','home'],['days','Mis días','cal'],['pay','Mi plata','pay'],['msgs','Mensajes','msg',un],['prof','Perfil','me']];
     }
-    const cur=S.role==='emp'&&S.detail?'team':S.tab;
+    const cur=S.role==='emp'&&S.detail?'team':S.tab;app.classList.toggle('desk',S.role==='emp'&&wide());
     app.innerHTML='<main>'+body+'</main><nav class="nav" style="grid-template-columns:repeat('+tabs.length+',1fr)">'+tabs.map(x=>'<button class="'+(cur===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+svg(x[2])+x[1]+(x[3]?'<span class="n">'+x[3]+'</span>':'')+'</button>').join('')+'</nav>';
     if(keep)app.querySelector('main').scrollTop=sc;
   }
